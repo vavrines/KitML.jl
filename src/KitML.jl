@@ -6,8 +6,7 @@
 
 module KitML
 
-using Reexport
-@reexport using KitBase
+using KitBase
 using Flux
 using DiffEqFlux
 
