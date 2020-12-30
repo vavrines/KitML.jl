@@ -9,7 +9,9 @@ module KitML
 using KitBase
 using Flux
 using DiffEqFlux
+using OrdinaryDiffEq
 
+include("Equation/equation.jl")
 include("Neural/neural.jl")
 
 end
