@@ -541,9 +541,9 @@ version = "0.8.4"
 
 [[KitBase]]
 deps = ["Conda", "Dates", "Distributions", "FFTW", "FastGaussQuadrature", "FileIO", "JLD2", "LinearAlgebra", "OffsetArrays", "Plots", "ProgressMeter", "PyCall", "SpecialFunctions", "Test"]
-git-tree-sha1 = "e48f0ee6c063cf4686eb322547e07b5a5324c4ad"
+git-tree-sha1 = "499ecd4b89486d24489788803f74b05729d6afae"
 uuid = "86eed249-3a28-466f-8d3a-596821e1af9a"
-version = "0.2.0"
+version = "0.3.0"
 
 [[LAME_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
