@@ -14,6 +14,7 @@ OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 DiffEqFlux = "^1"
 Flux = "0.11"
 KitBase = "0.1, 0.2, 0.3"
+Optim = "1.2"
 OrdinaryDiffEq = "5.46"
 julia = "^1"
 
