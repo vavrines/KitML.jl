@@ -19,10 +19,10 @@ uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 version = "2.4.0"
 
 [[ArnoldiMethod]]
-deps = ["DelimitedFiles", "LinearAlgebra", "Random", "SparseArrays", "StaticArrays", "Test"]
-git-tree-sha1 = "2b6845cea546604fb4dca4e31414a6a59d39ddcd"
+deps = ["DelimitedFiles", "LinearAlgebra", "Random", "SparseArrays", "Test"]
+git-tree-sha1 = "a5f9581eaf9371fe12b4a0b12c05690b45912e71"
 uuid = "ec485272-7323-5ecc-a04f-4719b315124d"
-version = "0.0.4"
+version = "0.0.2"
 
 [[ArrayInterface]]
 deps = ["LinearAlgebra", "Requires", "SparseArrays"]
@@ -540,10 +540,17 @@ uuid = "e5e0dc1b-0480-54bc-9374-aad01c23163d"
 version = "0.8.4"
 
 [[KitBase]]
+<<<<<<< HEAD
 deps = ["CUDA", "Conda", "Dates", "Distributions", "FFTW", "FastGaussQuadrature", "FileIO", "JLD2", "LinearAlgebra", "OffsetArrays", "Plots", "ProgressMeter", "PyCall", "SpecialFunctions", "Test"]
 git-tree-sha1 = "7a443ba2aa171ccc5570eececc35525cbf1e9ff1"
 uuid = "86eed249-3a28-466f-8d3a-596821e1af9a"
 version = "0.3.2"
+=======
+deps = ["Conda", "Dates", "Distributions", "FFTW", "FastGaussQuadrature", "FileIO", "JLD2", "LinearAlgebra", "OffsetArrays", "Plots", "ProgressMeter", "PyCall", "SpecialFunctions", "Test"]
+git-tree-sha1 = "499ecd4b89486d24489788803f74b05729d6afae"
+uuid = "86eed249-3a28-466f-8d3a-596821e1af9a"
+version = "0.3.0"
+>>>>>>> 9f388136dcbb3f0bc2b36f2828b1cab2f9328fcc
 
 [[LAME_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -960,9 +967,15 @@ version = "0.2.1"
 
 [[RecursiveArrayTools]]
 deps = ["ArrayInterface", "LinearAlgebra", "RecipesBase", "Requires", "StaticArrays", "Statistics", "ZygoteRules"]
+<<<<<<< HEAD
 git-tree-sha1 = "7ad5db165382ef329001bff730318c8921893f39"
 uuid = "731186ca-8d62-57ce-b412-fbd966d074cd"
 version = "2.9.0"
+=======
+git-tree-sha1 = "b7c8490725653998552f0c1d1737b2cee001b424"
+uuid = "731186ca-8d62-57ce-b412-fbd966d074cd"
+version = "2.8.2"
+>>>>>>> 9f388136dcbb3f0bc2b36f2828b1cab2f9328fcc
 
 [[RecursiveFactorization]]
 deps = ["LinearAlgebra", "LoopVectorization", "VectorizationBase"]
@@ -1091,9 +1104,9 @@ version = "1.0.0"
 
 [[StaticArrays]]
 deps = ["LinearAlgebra", "Random", "Statistics"]
-git-tree-sha1 = "da4cf579416c81994afd6322365d00916c79b8ae"
+git-tree-sha1 = "9da72ed50e94dbff92036da395275ed114e04d49"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "0.12.5"
+version = "1.0.1"
 
 [[Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
