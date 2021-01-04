@@ -540,17 +540,10 @@ uuid = "e5e0dc1b-0480-54bc-9374-aad01c23163d"
 version = "0.8.4"
 
 [[KitBase]]
-<<<<<<< HEAD
 deps = ["CUDA", "Conda", "Dates", "Distributions", "FFTW", "FastGaussQuadrature", "FileIO", "JLD2", "LinearAlgebra", "OffsetArrays", "Plots", "ProgressMeter", "PyCall", "SpecialFunctions", "Test"]
 git-tree-sha1 = "7a443ba2aa171ccc5570eececc35525cbf1e9ff1"
 uuid = "86eed249-3a28-466f-8d3a-596821e1af9a"
 version = "0.3.2"
-=======
-deps = ["Conda", "Dates", "Distributions", "FFTW", "FastGaussQuadrature", "FileIO", "JLD2", "LinearAlgebra", "OffsetArrays", "Plots", "ProgressMeter", "PyCall", "SpecialFunctions", "Test"]
-git-tree-sha1 = "499ecd4b89486d24489788803f74b05729d6afae"
-uuid = "86eed249-3a28-466f-8d3a-596821e1af9a"
-version = "0.3.0"
->>>>>>> 9f388136dcbb3f0bc2b36f2828b1cab2f9328fcc
 
 [[LAME_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -967,15 +960,9 @@ version = "0.2.1"
 
 [[RecursiveArrayTools]]
 deps = ["ArrayInterface", "LinearAlgebra", "RecipesBase", "Requires", "StaticArrays", "Statistics", "ZygoteRules"]
-<<<<<<< HEAD
 git-tree-sha1 = "7ad5db165382ef329001bff730318c8921893f39"
 uuid = "731186ca-8d62-57ce-b412-fbd966d074cd"
 version = "2.9.0"
-=======
-git-tree-sha1 = "b7c8490725653998552f0c1d1737b2cee001b424"
-uuid = "731186ca-8d62-57ce-b412-fbd966d074cd"
-version = "2.8.2"
->>>>>>> 9f388136dcbb3f0bc2b36f2828b1cab2f9328fcc
 
 [[RecursiveFactorization]]
 deps = ["LinearAlgebra", "LoopVectorization", "VectorizationBase"]
