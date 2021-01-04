@@ -1,7 +1,7 @@
 """
-KitML.jl : The lightweight module of neural differential equations within Kinetic.jl
-Copyright (c) 2020 Tianbai Xiao <tianbaixiao@gmail.com>
+KitML.jl : The lightweight module of neural differential equations in Kinetic.jl
 
+Copyright (c) 2021 Tianbai Xiao <tianbaixiao@gmail.com>
 """
 
 module KitML
