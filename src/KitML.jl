@@ -10,9 +10,12 @@ using KitBase
 using Flux
 using DiffEqFlux
 using OrdinaryDiffEq
+using JLD2
 
+include("IO/io.jl")
+include("Layer/layer.jl")
 include("Equation/equation.jl")
-include("Neural/neural.jl")
-include("Closure/neural_closure.jl")
+include("Solver/solver.jl")
+include("Closure/closure.jl")
 
 end

@@ -1,9 +1,9 @@
 """
-Collision solver of universal Boltzmann equation
-
     step_ube!(fwL, fhL, fbL, w, prim, h, b, fwR, fhR, fbR, u, weights, p; mode=:nn)
 
-@notes: u & weights kept in args for multi-dispatch
+Update solver of universal Boltzmann equation
+
+@args: u & weights kept for multiple dispatch
 
 """
 function step_ube!(fwL, fhL, fbL, w, prim, h, b, fwR, fhR, fbR, u, weights, p; mode=:nn)
