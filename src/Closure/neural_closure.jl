@@ -20,11 +20,6 @@ function call_neural_closure(X, model)
     return res
 end
 
-function create_neural_closure(imputDim, outputDim)
-    model = Chain(Dense(imputDim, 16, relu),Dense(16, 16,relu), Dense(16, outputDim))
-    return model
-end
-
 function train_neural_closure(X, Y, model)
     """
     X: Model input data
@@ -37,9 +32,25 @@ function train_neural_closure(X, Y, model)
     end
     ps = Flux.params(model)
     data = [(X, Y)]
-    cb() = @show(loss(X, Y))
-    @epochs 10 Flux.train!(loss, ps, data, ADAM(), cb=cb)
+    #cb() = @show(loss(X, Y))
+    @epochs 10 Flux.train!(loss, ps, data, ADAM())# cb=cb
     return model
 end
 
+function create_neural_closure(imputDim, outputDim)
+    model = Chain(Dense(imputDim, 16, relu),Dense(16, 16,relu), Dense(16, outputDim))
+    return model
+end
 
+# Structs for ResNet_closure
+struct IdentitySkip
+    inner
+end
+
+struct CatSkip
+    inner
+end
+
+function ResNet_closure(imputDim, outputDim)
+
+end

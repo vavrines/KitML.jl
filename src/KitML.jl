@@ -13,5 +13,6 @@ using OrdinaryDiffEq
 
 include("Equation/equation.jl")
 include("Neural/neural.jl")
+include("Closure/neural_closure.jl")
 
 end
