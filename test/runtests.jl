@@ -19,12 +19,18 @@ KitML.save_model(nn)
 # Layer
 sm = KitML.Shortcut(nn)
 sm(rand(21))
+show(sm)
 
 # Equation
 df = KitML.ube_dfdt(f, (M, τ, (nn, p)), 0.1)
 df2 = similar(df)
 KitML.ube_dfdt!(df2, f, (M, τ, (nn, p)), 0.1)
 @test df ≈ df2 atol = 0.01
+
+nn1 = FastChain(FastDense(21, 21, tanh), FastDense(21, 21, tanh))
+p1 = initial_params(nn1)
+KitML.ube_dfdt(f, (M, τ, (nn1, p1)), 0.1)
+KitML.ube_dfdt!(similar(f), f, (M, τ, (nn1, p1)), 0.1)
 
 # Solver
 fw = zeros(3)
