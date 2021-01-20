@@ -2,7 +2,22 @@
 # I / O Methods
 # ============================================================
 
-export save_model
+export load_data,
+       save_model
+
+"""
+    load_data(file; mode = :csv, dlm = " ")
+
+Load dataset from file
+"""
+function load_data(file; mode = :csv, dlm = nothing)
+    if mode == :csv
+        dataset = CSV.File(file; delim = dlm) |> DataFrame
+    end
+
+    return dataset
+end
+
 
 """
     save_model(nn; mode = :jld)
