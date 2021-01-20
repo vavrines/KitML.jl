@@ -10,12 +10,15 @@ using KitBase
 using Flux
 using DiffEqFlux
 using OrdinaryDiffEq
+using CSV
+using DataFrames
 using JLD2
 
 include("IO/io.jl")
-include("Layer/layer.jl")
 include("Equation/equation.jl")
-include("Solver/solver.jl")
+include("Layer/layer.jl")
+include("Train/train.jl")
 include("Closure/closure.jl")
+include("Solver/solver.jl")
 
 end

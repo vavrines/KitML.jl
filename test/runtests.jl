@@ -14,12 +14,20 @@ begin
 end
 
 # IO
+cd(@__DIR__)
+KitML.load_data("dataset.csv", dlm = ",")
 KitML.save_model(nn)
 
 # Layer
 sm = KitML.Shortcut(nn)
 sm(rand(21))
 show(sm)
+
+# Train
+X = randn(21, 10)
+Y = rand(21, 10)
+KitML.sci_train!(nn, (X, Y), ADAM(), 1, 1)
+KitML.sci_train!(nn, Flux.Data.DataLoader(X, Y), ADAM(), 1)
 
 # Equation
 df = KitML.ube_dfdt(f, (M, τ, (nn, p)), 0.1)
