@@ -1,8 +1,5 @@
 # ============================================================
-# Universal Boltzmann solver
+# Universal Boltzmann Equation
 # ============================================================
 
-export ube_dfdt, ube_dfdt!
-
-include("neural_collision.jl")
-include("neural_step.jl")
+include("solver_step.jl")
