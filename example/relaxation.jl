@@ -7,21 +7,21 @@ begin
     case = "homogeneous"
     maxTime = 3
     tlen = 16
-    u0 = -5
-    u1 = 5
+    u0 = -5.0
+    u1 = 5.0
     nu = 80
     nug = 0
-    v0 = -5
-    v1 = 5
+    v0 = -5.0
+    v1 = 5.0
     nv = 28
     nvg = 0
-    w0 = -5
-    w1 = 5
+    w0 = -5.0
+    w1 = 5.0
     nw = 28
     nwg = 0
     vMeshType = "rectangle"
     nm = 5
-    knudsen = 1
+    knudsen = 1.0
     inK = 0
     alpha = 1.0
     omega = 0.5
@@ -70,7 +70,6 @@ begin
     # BGK
     prob1 = ODEProblem(bgk_ode!, f0, tspan, [M0, τ0])
     data_bgk = solve(prob1, Tsit5(), saveat = tran) |> Array
-
 
     data_boltz_1D = zeros(Float32, axes(data_boltz, 1), axes(data_boltz, 4))
     data_bgk_1D = zeros(Float32, axes(data_bgk, 1), axes(data_bgk, 4))
@@ -123,7 +122,7 @@ begin
 
     his = []
     cb = function (p, l)
-        display(l)
+        println("loss: $l")
         push!(his, l)
         return false
     end
