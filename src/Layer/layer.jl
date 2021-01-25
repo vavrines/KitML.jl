@@ -23,7 +23,6 @@ Flux.@functor Shortcut
 
 (nn::Shortcut)(x) = nn.σ.(nn.f(nn.chain(x), x))
 
-
 function Base.show(io::IO, model::Shortcut{T}) where {T}
     print(
         io,
