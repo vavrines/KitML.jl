@@ -22,29 +22,31 @@ end
 
 
 """
-    create_neural_closure(imputDim, outputDim; acfun = relu)
+Input Convex Layer
 
-Create neural closure model
 """
-
-################################################################################
-# input convex neural network
-struct ICNNLayer
-    W
-    U
-    b
-    act
+struct ICNNLayer{T1<:AbstractArray,T2,T3}
+    W::T1
+    U::T1
+    b::T2
+    σ::T3
 end
 
 # constructor
-ICNNLayer(z_in::Integer, x_in::Integer, out::Integer, activation) =
+ICNNLayer(z_in::Integer, x_in::Integer, out::Integer, activation::Function) =
     ICNNLayer(randn(out, z_in), randn(out, x_in), randn(out), activation)
+
 # forward pass
-(m::ICNNLayer)(z, x) = m.act.(m.W*z + softplus.(m.U)*x + m.b)
+(m::ICNNLayer)(z, x) = m.σ.(m.W * z + softplus.(m.U) * x + m.b)
+
 # track params
 Flux.@functor ICNNLayer
 
-# Input Convex Neural Network (ICNN)
+
+"""
+Input Convex Neural Network (ICNN)
+
+"""
 struct ICNN
     InLayer
     HLayer1
@@ -66,6 +68,7 @@ ICNN(input_dim::Integer, output_Dim::Integer, layer_sizes::Vector, activation) =
     end
     ICNN(InLayer, HLayers[1], HLayers[2], activation)
 end
+
 # forward pass
 (m::ICNN)(x) = begin
     z = m.act(m.InLayer(x))
@@ -73,8 +76,15 @@ end
     z = m.HLayer2(z, x)
     return z
 end
+
 Flux.@functor ICNN
 
+
+"""
+    create_neural_closure(imputDim, outputDim; acfun = relu)
+
+Create neural closure model
+"""
 function create_neural_closure(imputDim, outputDim; acfun = relu)
 
     # standard model
