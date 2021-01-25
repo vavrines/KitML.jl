@@ -1,6 +1,7 @@
 using ProgressMeter, LinearAlgebra, Optim, JLD2 #list, SphericalHarmonicExpansions
 import KitBase
 import KitML
+import CSV
 
 # one-cell simplification
 begin
@@ -77,30 +78,31 @@ begin
     global nn_model = KitML.create_neural_closure(ne, ne)
 
     # load saved params
-    @load "nn_model.jld2" nn_model
+    #@load "nn_model.jld2" nn_model
     println("model loaded")
 end 
-
+println("here")
 global t = 0.0
 flux1 = zeros(ne, nx + 1, ny)
 flux2 = zeros(ne, nx, ny + 1)
 
 @showprogress for iter = 1:10
+    println("here1")
     # regularization
     Threads.@threads for j = 1:ny
         for i = 1:nx
-            #res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
-            #α[:, i, j] .= res.minimizer
+            res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
+            α[:, i, j] .= res.minimizer
             
-            #phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+            phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
             
             #training phase network
-            #global nn_model = KitML.train_neural_closure(phi[:, i, j], α[:, i, j], nn_model)
+            global nn_model = KitML.train_neural_closure(phi[:, i, j], α[:, i, j], nn_model)
 
 
             #Execution phase
-            α[:, i, j]=nn_model(phi[:, i, j])
-            phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+            #α[:, i, j]=nn_model(phi[:, i, j])
+            #phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
         end
     end
     

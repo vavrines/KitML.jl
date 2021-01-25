@@ -33,20 +33,3 @@ function Base.show(io::IO, model::Shortcut{T}) where {T}
         "activation: $(model.σ)\n",
     )
 end
-
-
-"""
-Shortcut connection for ICNN approach by Amos et al.
-
-@vars chain: inner chain of layer(s)
-@vars f: connection function between chain and shortcut inputs
-@vars σ: activation function
-"""
-
-struct ICNN{T}
-    f::T
-    σ::Function
-end
-
-ICNN(chain::T) where {T} = ICNN{typeof(chain)}(chain, +, tanh)
-
