@@ -22,65 +22,6 @@ end
 
 
 """
-Input Convex Layer
-
-"""
-struct ICNNLayer{T1<:AbstractArray,T2<:Union{Flux.Zeros, AbstractVector},T3}
-    W::T1
-    U::T1
-    b::T2
-    σ::T3
-end
-
-# constructor
-ICNNLayer(z_in::Integer, x_in::Integer, out::Integer, activation = tanh::Function) =
-    ICNNLayer(randn(out, z_in), randn(out, x_in), randn(out), activation)
-
-# forward pass
-(m::ICNNLayer)(z, x) = m.σ.(m.W * z + softplus.(m.U) * x + m.b)
-
-# track params
-Flux.@functor ICNNLayer
-
-
-"""
-Input Convex Neural Network (ICNN)
-
-"""
-struct ICNN{T1,T2,T3}
-    InLayer::T1
-    HLayer1::T2
-    HLayer2::T2
-    σ::T3
-end
-
-# constructor
-ICNN(input_dim::Integer, output_Dim::Integer, layer_sizes::Vector, activation = tanh::Function) = begin
-    InLayer = Dense(input_dim, layer_sizes[1])
-    HLayers = []
-    if length(layer_sizes) > 1
-        i = 1
-        for out in layer_sizes[2:end]
-            push!(HLayers, ICNNLayer(layer_sizes[i], input_dim, out, activation))
-            i += 1
-        end
-        push!(HLayers, ICNNLayer(layer_sizes[end], input_dim, output_Dim, activation))
-    end
-    ICNN(InLayer, HLayers[1], HLayers[2], activation)
-end
-
-# forward pass
-(m::ICNN)(x) = begin
-    z = m.σ.(m.InLayer(x))
-    z = m.HLayer1(z, x)
-    z = m.HLayer2(z, x)
-    return z
-end
-
-Flux.@functor ICNN
-
-
-"""
     create_neural_closure(imputDim, outputDim; acfun = relu)
 
 Create neural closure model

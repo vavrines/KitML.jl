@@ -61,9 +61,4 @@ Y = randn(5, 2)
 KitML.train_neural_closure(X, Y, m, 2)
 KitML.neural_closure(rand(10), m)
 
-nn2 = KitML.ICNNLayer(5, 5, 1, tanh)
-nn2(randn(5))
-
-icnn = KitML.ICNN(10, [10, 5, 1], tanh)
-
-icnn(randn(10))
+include("test_icnn.jl")
