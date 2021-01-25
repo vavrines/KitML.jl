@@ -9,7 +9,7 @@ begin
     M = KitML.KitBase.maxwellian(u, prim)
     τ = 0.01
     f = deepcopy(M)
-    nn = Chain(Dense(21, 21, tanh), Dense(21, 21, tanh))
+    nn = Chain(Dense(21, 21, tanh), Dense(21, 21))
     p = initial_params(nn)
 end
 
@@ -28,6 +28,9 @@ X = randn(21, 10)
 Y = rand(21, 10)
 KitML.sci_train!(nn, (X, Y), ADAM(), 1, 1)
 KitML.sci_train!(nn, Flux.Data.DataLoader(X, Y), ADAM(), 1)
+
+fnn = FastChain(FastDense(21, 21, tanh), FastDense(21, 21))
+KitML.sci_train(fnn, (X, Y))
 
 # Equation
 df = KitML.ube_dfdt(f, (M, τ, (nn, p)), 0.1)
