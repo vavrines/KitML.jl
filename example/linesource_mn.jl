@@ -81,16 +81,15 @@ begin
     #@load "nn_model.jld2" nn_model
     println("model loaded")
 end 
-println("here")
+
 global t = 0.0
 flux1 = zeros(ne, nx + 1, ny)
 flux2 = zeros(ne, nx, ny + 1)
 
-@showprogress for iter = 1:10
-    println("here1")
+#@showprogress for iter = 1:10
     # regularization
-    Threads.@threads for j = 1:ny
-        for i = 1:nx
+    Threads.@threads for j = 1:1#ny
+        for i = 1:1#nx
             res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
             α[:, i, j] .= res.minimizer
             
@@ -143,7 +142,7 @@ flux2 = zeros(ne, nx, ny + 1)
     end
 
     global t += dt
-end
+#end
 
 # saving neural network Progress
 @save "nn_model.jld2" nn_model

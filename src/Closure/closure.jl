@@ -26,13 +26,14 @@ end
 
 Create neural closure model
 """
-function create_neural_closure(imputDim, outputDim; acfun = relu)
-
-    # standard model
-    #model = Chain(Dense(imputDim, 16, acfun), Dense(16, 16, acfun), Dense(16, outputDim))
-
-    # ICNN model
-    model = ICNN(imputDim,outputDim,[10,10,10],acfun)
+function create_neural_closure(Din, Dout, Dhid = 10; acfun = relu, mode = :icnn)
+    if mode == :dense
+        # standard model
+        model = Chain(Dense(Din, Dhid, acfun), Dense(Dhid, Dhid, acfun), Dense(Dhid, Dout))
+    elseif mode == :icnn
+        # ICNN model
+        model = ICNNChain(Din, Dout, [Dhid, Dhid, Dhid], acfun)
+    end
 
     return model
 end
@@ -49,11 +50,7 @@ Continuous training based on existing model
 @args ne: number of epochs
 """
 function train_neural_closure(X, Y, model, ne = 10)
-    loss(x, y) = sum(abs2, model(x) - y)
-    ps = Flux.params(model)
-    data = [(X, Y)]
-    Flux.@epochs ne Flux.train!(loss, ps, data, ADAM())
-
+    sci_train!(model, (X, Y))
     return model
 end
 
