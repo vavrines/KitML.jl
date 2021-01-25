@@ -26,6 +26,7 @@ begin
     )
 end
 KitML.sci_train!(nn, data, ADAM(), 5)
+KitML.save_model(nn)
 
 # surrogate 2: ResNet
 nn2 = Chain(

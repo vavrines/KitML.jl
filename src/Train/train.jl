@@ -48,7 +48,7 @@ Scientific machine learning training function
 - @args ne: epoch number
 - @args nb: batch size
 """
-function sci_train!(ann::Chain, data, opt = ADAM(), ne = 1, nb = 256)
+function sci_train!(ann::Chain, data::Tuple, opt = ADAM(), ne = 1, nb = 256)
     L = size(data[1], 2)
     loss(x, y) = sum(abs2, ann(x) - y) / L
     ps = params(ann)
@@ -65,7 +65,7 @@ function sci_train!(ann::Chain, data, opt = ADAM(), ne = 1, nb = 256)
     return nothing
 end
 
-function sci_train!(ann, dl::Flux.Data.DataLoader, opt = ADAM(), ne = 1)
+function sci_train!(ann::Chain, dl::Flux.Data.DataLoader, opt = ADAM(), ne = 1)
     L = size(dl.data[1], 2)
     loss(x, y) = sum(abs2, ann(x) - y) / L
     ps = params(ann)
