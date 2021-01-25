@@ -25,7 +25,7 @@ end
 Input Convex Layer
 
 """
-struct ICNNLayer{T1<:AbstractArray,T2,T3}
+struct ICNNLayer{T1<:AbstractArray,T2<:Union{Flux.Zeros, AbstractVector},T3}
     W::T1
     U::T1
     b::T2
@@ -33,7 +33,7 @@ struct ICNNLayer{T1<:AbstractArray,T2,T3}
 end
 
 # constructor
-ICNNLayer(z_in::Integer, x_in::Integer, out::Integer, activation::Function) =
+ICNNLayer(z_in::Integer, x_in::Integer, out::Integer, activation = tanh::Function) =
     ICNNLayer(randn(out, z_in), randn(out, x_in), randn(out), activation)
 
 # forward pass
@@ -47,15 +47,15 @@ Flux.@functor ICNNLayer
 Input Convex Neural Network (ICNN)
 
 """
-struct ICNN
-    InLayer
-    HLayer1
-    HLayer2
-    act
+struct ICNN{T1,T2,T3}
+    InLayer::T1
+    HLayer1::T2
+    HLayer2::T2
+    σ::T3
 end
 
 # constructor
-ICNN(input_dim::Integer, output_Dim::Integer, layer_sizes::Vector, activation) = begin
+ICNN(input_dim::Integer, output_Dim::Integer, layer_sizes::Vector, activation = tanh::Function) = begin
     InLayer = Dense(input_dim, layer_sizes[1])
     HLayers = []
     if length(layer_sizes) > 1
@@ -71,7 +71,7 @@ end
 
 # forward pass
 (m::ICNN)(x) = begin
-    z = m.act(m.InLayer(x))
+    z = m.σ.(m.InLayer(x))
     z = m.HLayer1(z, x)
     z = m.HLayer2(z, x)
     return z
