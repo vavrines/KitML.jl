@@ -3,8 +3,7 @@
 # ============================================================
 
 export neural_closure,
-       create_neural_closure,
-       train_neural_closure
+       create_neural_closure
 
 """
     neural_closure(X, model)
@@ -26,32 +25,14 @@ end
 
 Create neural closure model
 """
-function create_neural_closure(imputDim, outputDim; acfun = relu)
-    return Chain(Dense(imputDim, 16, acfun), Dense(16, 16, acfun), Dense(16, outputDim))
-end
-
-
-"""
-    train_neural_closure(X, Y, model)
-
-Continuous training based on existing model
-
-@args X: Model input data
-@args Y: Training data "truth"
-@args model: neural network model
-@args ne: number of epochs
-"""
-function train_neural_closure(X, Y, model, ne = 10)
-    loss(x, y) = sum(abs2, model(x) - y)
-    ps = Flux.params(model)
-    data = [(X, Y)]
-    Flux.@epochs ne Flux.train!(loss, ps, data, ADAM())
+function create_neural_closure(Din::T, Dout::T, Dhid = 10::T, Nhid = 1::T; acfun = relu, mode = :icnn) where {T<:Integer}
+    if mode == :dense
+        # standard model
+        model = Chain(Dense(Din, Dhid, acfun), Chain(Dhid, Nhid, acfun), Dense(Dhid, Dout))
+    elseif mode == :icnn
+        # ICNN model
+        model = ICNNChain(Din, Dout, ones(Int, Nhid) * Dhid, acfun)
+    end
 
     return model
 end
-
-
-"""
-function ResNet_closure(imputDim, outputDim)
-end
-"""
