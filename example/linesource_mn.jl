@@ -1,7 +1,5 @@
-using ProgressMeter, LinearAlgebra, Optim, JLD2 #list, SphericalHarmonicExpansions
-import KitBase
+using ProgressMeter, LinearAlgebra, Optim, JLD2, KitBase
 import KitML
-import CSV
 
 # one-cell simplification
 begin
@@ -96,8 +94,7 @@ flux2 = zeros(ne, nx, ny + 1)
             phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
             
             #training phase network
-            global nn_model = KitML.train_neural_closure(phi[:, i, j], α[:, i, j], nn_model)
-
+            sci_train!(nn_model, (phi[:, i, j], α[:, i, j]))
 
             #Execution phase
             #α[:, i, j]=nn_model(phi[:, i, j])
