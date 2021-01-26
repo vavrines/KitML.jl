@@ -26,13 +26,16 @@ KitML.dense_layer(4, 4; isBias = true)
 KitML.dense_layer(4, 4; isBias = false)
 
 sm = KitML.Shortcut(nn)
-sm(rand(21))
 show(sm)
+sm(rand(21))
 
 icnnl = KitML.ICNNLayer(4, 4, 1, identity; fw = randn, fb = zeros, precision = Float32)
 icnnc = KitML.ICNNChain(4, 1, [10, 10], identity; fw = randn, fb = zeros, precision = Float32)
 show(icnnl)
 show(icnnc)
+icnnl(randn(4))
+icnnl(randn(4), randn(4))
+icnnc(randn(4))
 
 # Train
 X = randn(21, 10)
