@@ -1,5 +1,5 @@
 # ============================================================
-# Training and Optimization Methods
+# Training & Optimization Methods
 # ============================================================
 
 export sci_train, sci_train!
