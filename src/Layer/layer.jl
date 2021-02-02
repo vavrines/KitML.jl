@@ -136,7 +136,7 @@ function (m::ICNNLayer)(z::AbstractArray, x::AbstractArray)
     sx = size(x)
     z = reshape(z, sz[1], :)
     x = reshape(x, sx[1], :)
-    z = σ.(W * z + softplus.(U) * x .+ b)
+    z = σ.(softplus.(W) * z + U * x .+ b)
 
     return reshape(z, :, sz[2:end]...)   
 end
@@ -147,8 +147,8 @@ function Base.show(io::IO, model::ICNNLayer{T1,T2,T3}) where {T1,T2,T3}
     print(
         io,
         "ICNN layer{$T1,$T2,$T3}\n",
-        "weights: $(model.W |> size)\n",
-        "nonnegative weights: $(model.U |> size)\n",
+        "nonnegative weights for: $(model.W |> size)\n",
+        "input weights: $(model.U |> size)\n",
         "bias: $(model.b |> size)\n",
         "activation: $(model.σ)\n",
     )
@@ -188,8 +188,9 @@ function ICNNChain(
             HLayers = (HLayers..., KitML.ICNNLayer(layer_sizes[i], din, out, activation; fw = fw, fb = fb, precision = precision))
             i += 1
         end
-        HLayers = (HLayers..., KitML.ICNNLayer(layer_sizes[end], din, dout, identity; fw = fw, fb = fb, precision = precision))
     end
+    HLayers = (HLayers..., KitML.ICNNLayer(layer_sizes[end], din, dout, identity; fw = fw, fb = fb, precision = precision))
+
 
     return ICNNChain(InLayer, HLayers)
 

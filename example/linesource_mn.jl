@@ -94,7 +94,7 @@ flux2 = zeros(ne, nx, ny + 1)
             phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
             
             #training phase network
-            sci_train!(nn_model, (phi[:, i, j], α[:, i, j]))
+            KitML.sci_train!(nn_model, (phi[:, i, j], α[:, i, j]))
 
             #Execution phase
             #α[:, i, j]=nn_model(phi[:, i, j])
