@@ -1,4 +1,5 @@
-using ProgressMeter, LinearAlgebra, Optim, JLD2, KitBase
+using LinearAlgebra, Flux, Flux.Zygote, Optim, JLD2
+using KitBase, ProgressMeter
 import KitML
 
 # one-cell simplification
@@ -73,40 +74,52 @@ end
 
 begin
     # create neural network
-    global nn_model = KitML.create_neural_closure(ne, ne)
+    #nn = KitML.create_neural_closure(ne, 1)
 
     # load saved params
-    #@load "nn_model.jld2" nn_model
-    println("model loaded")
+    cd(@__DIR__)
+    @load "model.jld2" nn
+    @info "model loaded"
 end 
+
+gradient(u -> 2u[1] + u[2], [1., 2.])
+
 
 global t = 0.0
 flux1 = zeros(ne, nx + 1, ny)
 flux2 = zeros(ne, nx, ny + 1)
 
-#@showprogress for iter = 1:10
+@showprogress for iter = 1:1
     # regularization
-    Threads.@threads for j = 1:1#ny
-        for i = 1:1#nx
-            res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
-            α[:, i, j] .= res.minimizer
-            
-            phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+    Threads.@threads for j = 1:ny
+        for i = 1:nx
+            phi_old = phi
+
+
+            #res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
+            #α[:, i, j] .= res.minimizer
+            #phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
             
             #training phase network
-            KitML.sci_train!(nn_model, (phi[:, i, j], α[:, i, j]))
+            KitML.sci_train!(nn, (phi[:, i, j], α[:, i, j]))
 
-            #Execution phase
-            #α[:, i, j]=nn_model(phi[:, i, j])
-            #phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+            # calculate η' = f'(u0, u1, u2, u3)
+            α[:, i, j] = gradient(x -> first(nn(x)), phi[:, i, j])[1]
+            phi[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
         end
     end
+
+
+
+    KitML.sci_train!(nn, (phi[:, i, j], η[i, j]))
     
     # flux
     fη1 = zeros(nq)
     for j = 1:ny
         for i = 2:nx
-            KitBase.flux_kfvs!(fη1, KitBase.maxwell_boltzmann_dual.(α[:, i-1, j]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 1], dt)
+            αL = gradient(x -> first(nn(x)), phi[:, i-1, j])[1]
+            αR = gradient(x -> first(nn(x)), phi[:, i, j])[1]
+            KitBase.flux_kfvs!(fη1, KitBase.maxwell_boltzmann_dual.(αL' * m)[:], KitBase.maxwell_boltzmann_dual.(αR' * m)[:], points[:, 1], dt)
             
             for k in axes(flux1, 1)
                 flux1[k, i, j] = sum(m[k, :] .* weights .* fη1)
@@ -117,7 +130,9 @@ flux2 = zeros(ne, nx, ny + 1)
     fη2 = zeros(nq)
     for i = 1:nx
         for j = 2:ny
-            KitBase.flux_kfvs!(fη2, KitBase.maxwell_boltzmann_dual.(α[:, i, j-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 2], dt)
+            αL = gradient(x -> first(nn(x)), phi[:, i, j-1])[1]
+            αR = gradient(x -> first(nn(x)), phi[:, i, j])[1]
+            KitBase.flux_kfvs!(fη2, KitBase.maxwell_boltzmann_dual.(αL' * m)[:], KitBase.maxwell_boltzmann_dual.(αR' * m)[:], points[:, 2], dt)
             
             for k in axes(flux2, 1)
                 flux2[k, i, j] = sum(m[k, :] .* (weights .* fη2))
@@ -128,23 +143,31 @@ flux2 = zeros(ne, nx, ny + 1)
     # update
     for j = 2:ny-1
         for i = 2:nx-1
-            for q = 1:ne
+            for q = 1:1
                 phi[q, i, j] =
                     phi[q, i, j] +
                     (flux1[q, i, j] - flux1[q, i+1, j]) / dx +
-                    (flux2[q, i, j] - flux2[q, i, j+1]) / dy #+
-                    #(integral - phi[q, i, j]) * dt
+                    (flux2[q, i, j] - flux2[q, i, j+1]) / dy +
+                    (SigmaS[i, j] * phi[q, i, j] - SigmaT[i, j] * phi[q, i, j]) * dt
+            end
+
+            for q = 2:ne
+                phi[q, i, j] =
+                    phi[q, i, j] +
+                    (flux1[q, i, j] - flux1[q, i+1, j]) / dx +
+                    (flux2[q, i, j] - flux2[q, i, j+1]) / dy +
+                    (- SigmaT[i, j] * phi[q, i, j]) * dt
             end
         end
     end
 
     global t += dt
-#end
-
-# saving neural network Progress
-@save "nn_model.jld2" nn_model
-println("model saved")
+end
 
 using Plots
-contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], α[1, :, :])
 contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
+#contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], α[1, :, :])
+
+# saving neural network Progress
+@save "model.jld2" nn
+@info "model saved"
