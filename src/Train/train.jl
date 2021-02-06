@@ -15,7 +15,7 @@ Scientific machine learning training function
 - @args opt: optimizer 
 - @args ni: iteration number
 """
-function sci_train(ann::FastChain, data, θ = initial_params(ann), opt = ADAM(), ni = 200)
+function sci_train(ann::T, data, θ = initial_params(ann), opt = ADAM(), ni = 200) where {T<:DiffEqFlux.FastLayer}
     L = size(data[1], 2)
     loss(p) = sum(abs2, ann(data[1], p) - data[2]) / L
 

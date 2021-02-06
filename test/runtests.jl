@@ -25,6 +25,8 @@ Chain(4, 4, tanh)
 KitML.dense_layer(4, 4; isBias = true)
 KitML.dense_layer(4, 4; isBias = false)
 
+KitML.FastAffine(4, 4, tanh)
+
 sm = KitML.Shortcut(nn)
 show(sm)
 sm(rand(21))
@@ -36,6 +38,11 @@ show(icnnc)
 icnnl(randn(4))
 icnnl(randn(4), randn(4))
 icnnc(randn(4))
+
+fil = KitML.FastIC(4, 4, 4)
+fic = KitML.FastICNN(4, 1, [10, 10])
+fil(rand(4), rand(4), initial_params(fil))
+fic(rand(4), initial_params(fic))
 
 # Train
 X = randn(21, 10)
