@@ -36,3 +36,36 @@ end
 
 res = DiffEqFlux.sciml_train(loss, p, ADAM(), cb = cb, maxiters = 100)
 res = DiffEqFlux.sciml_train(loss, res.minimizer, ADAM(), cb = cb, maxiters = 100)
+
+struct FastICNN{I<:Integer,F1,F2} <: DiffEqFlux.FastLayer
+    zin::I
+    xin::I
+    out::I
+    σ::F1
+    initial_params::F2
+end
+
+function FastICNN(
+    zin::Integer,
+    xin::Integer,
+    out::Integer,
+    σ = identity;
+    initW = Flux.glorot_uniform,
+    initb = Flux.zeros,
+)
+    initial_params() = vcat(vec(initW(out, zin)), vec(initW(out, xin)), initb(out))
+    return FastICNN{typeof(out),typeof(σ),typeof(initial_params)}(zin, xin, out, σ, initial_params)
+end
+
+function (f::FastICNN)(z, x, p)
+    f.σ.(softplus.(reshape(p[1:(f.out*f.zin)], f.out, f.zin)) * z .+ 
+        reshape(p[f.out*f.zin+1:(f.out*f.zin+f.out*f.xin)], f.out, f.xin) * x .+
+        p[(f.out*f.zin+f.out*f.xin+1):end])
+end
+
+DiffEqFlux.paramlength(f::FastICNN) = f.out * (f.zin + f.xin + 1)
+DiffEqFlux.initial_params(f::FastICNN) = f.initial_params()
+
+n1 = FastICNN(4, 4, 4)
+p = initial_params(n1)
+n1(randn(4), randn(4), p)
