@@ -12,11 +12,16 @@ begin
     ne = (L + 1)^2
 
     α = zeros(ne)
-    u0 = [2., 0., 0., 0.]
+    u0 = [2.0, 0.0, 0.0, 0.0]
     m = KitBase.eval_spherharmonic(points, L)
 
     res = KitBase.optimize_closure(α, m, weights, u0, KitBase.maxwell_boltzmann_dual)
-    u = KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+    u = KitBase.realizable_reconstruct(
+        res.minimizer,
+        m,
+        weights,
+        KitBase.maxwell_boltzmann_dual_prime,
+    )
 end
 
 # multi-cell case
@@ -80,9 +85,9 @@ begin
     cd(@__DIR__)
     @load "model.jld2" nn
     @info "model loaded"
-end 
+end
 
-gradient(u -> 2u[1] + u[2], [1., 2.])
+gradient(u -> 2u[1] + u[2], [1.0, 2.0])
 
 
 global t = 0.0
@@ -99,28 +104,39 @@ flux2 = zeros(ne, nx, ny + 1)
             #res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
             #α[:, i, j] .= res.minimizer
             #phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
-            
+
             #training phase network
             KitML.sci_train!(nn, (phi[:, i, j], α[:, i, j]))
 
             # calculate η' = f'(u0, u1, u2, u3)
             α[:, i, j] = gradient(x -> first(nn(x)), phi[:, i, j])[1]
-            phi[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
+            phi[:, i, j] .= KitBase.realizable_reconstruct(
+                α[:, i, j],
+                m,
+                weights,
+                KitBase.maxwell_boltzmann_dual_prime,
+            )
         end
     end
 
 
 
     KitML.sci_train!(nn, (phi[:, i, j], η[i, j]))
-    
+
     # flux
     fη1 = zeros(nq)
     for j = 1:ny
         for i = 2:nx
             αL = gradient(x -> first(nn(x)), phi[:, i-1, j])[1]
             αR = gradient(x -> first(nn(x)), phi[:, i, j])[1]
-            KitBase.flux_kfvs!(fη1, KitBase.maxwell_boltzmann_dual.(αL' * m)[:], KitBase.maxwell_boltzmann_dual.(αR' * m)[:], points[:, 1], dt)
-            
+            KitBase.flux_kfvs!(
+                fη1,
+                KitBase.maxwell_boltzmann_dual.(αL' * m)[:],
+                KitBase.maxwell_boltzmann_dual.(αR' * m)[:],
+                points[:, 1],
+                dt,
+            )
+
             for k in axes(flux1, 1)
                 flux1[k, i, j] = sum(m[k, :] .* weights .* fη1)
             end
@@ -132,14 +148,20 @@ flux2 = zeros(ne, nx, ny + 1)
         for j = 2:ny
             αL = gradient(x -> first(nn(x)), phi[:, i, j-1])[1]
             αR = gradient(x -> first(nn(x)), phi[:, i, j])[1]
-            KitBase.flux_kfvs!(fη2, KitBase.maxwell_boltzmann_dual.(αL' * m)[:], KitBase.maxwell_boltzmann_dual.(αR' * m)[:], points[:, 2], dt)
-            
+            KitBase.flux_kfvs!(
+                fη2,
+                KitBase.maxwell_boltzmann_dual.(αL' * m)[:],
+                KitBase.maxwell_boltzmann_dual.(αR' * m)[:],
+                points[:, 2],
+                dt,
+            )
+
             for k in axes(flux2, 1)
                 flux2[k, i, j] = sum(m[k, :] .* (weights .* fη2))
             end
         end
     end
-    
+
     # update
     for j = 2:ny-1
         for i = 2:nx-1
@@ -156,7 +178,7 @@ flux2 = zeros(ne, nx, ny + 1)
                     phi[q, i, j] +
                     (flux1[q, i, j] - flux1[q, i+1, j]) / dx +
                     (flux2[q, i, j] - flux2[q, i, j+1]) / dy +
-                    (- SigmaT[i, j] * phi[q, i, j]) * dt
+                    (-SigmaT[i, j] * phi[q, i, j]) * dt
             end
         end
     end

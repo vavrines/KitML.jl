@@ -10,7 +10,10 @@ res = KitML.sci_train(nn, (X, Y))
 res = KitML.sci_train(nn, (X, Y), res.minimizer, ADAM(), 10000)
 
 # fast affines
-nn = FastChain(KitML.FastAffine(4, 4, tanh; precision = Float64), KitML.FastAffine(4, 4; precision = Float64))
+nn = FastChain(
+    KitML.FastAffine(4, 4, tanh; precision = Float64),
+    KitML.FastAffine(4, 4; precision = Float64),
+)
 res = KitML.sci_train(nn, (X, Y))
 res = KitML.sci_train(nn, (X, Y), res.minimizer, ADAM(), 5000)
 

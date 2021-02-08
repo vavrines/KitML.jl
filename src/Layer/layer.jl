@@ -85,7 +85,8 @@ function FastAffine(
     return FastAffine(out, in, σ, initial_params)
 end
 
-(f::FastAffine)(x, p) = f.σ.(reshape(p[1:(f.out*f.in)], f.out, f.in) * x .+ p[(f.out*f.in+1):end])
+(f::FastAffine)(x, p) =
+    f.σ.(reshape(p[1:(f.out*f.in)], f.out, f.in) * x .+ p[(f.out*f.in+1):end])
 
 DiffEqFlux.paramlength(f::FastAffine) = f.out * (f.in + 1)
 DiffEqFlux.initial_params(f::FastAffine) = f.initial_params()
@@ -165,7 +166,7 @@ function (m::ICNNLayer)(x::AbstractArray)
     x = reshape(x, sz[1], :) # reshape to handle dims > 1 as batch dimensions 
     x = σ.(W * x .+ b)
 
-    return reshape(x, :, sz[2:end]...)   
+    return reshape(x, :, sz[2:end]...)
 end
 
 function (m::ICNNLayer)(z::AbstractArray, x::AbstractArray)
@@ -176,7 +177,7 @@ function (m::ICNNLayer)(z::AbstractArray, x::AbstractArray)
     x = reshape(x, sx[1], :)
     z = σ.(softplus.(W) * z + U * x .+ b)
 
-    return reshape(z, :, sz[2:end]...)   
+    return reshape(z, :, sz[2:end]...)
 end
 
 Flux.@functor ICNNLayer
@@ -216,18 +217,40 @@ function ICNNChain(
     fb = zeros::Function,
     precision = Float32,
 ) where {TI<:Integer,TT<:Union{Tuple,AbstractVector}}
-    
+
     InLayer = Dense(din, layer_sizes[1], activation)
 
     HLayers = ()
     if length(layer_sizes) > 1
         i = 1
         for out in layer_sizes[2:end]
-            HLayers = (HLayers..., KitML.ICNNLayer(layer_sizes[i], din, out, activation; fw = fw, fb = fb, precision = precision))
+            HLayers = (
+                HLayers...,
+                KitML.ICNNLayer(
+                    layer_sizes[i],
+                    din,
+                    out,
+                    activation;
+                    fw = fw,
+                    fb = fb,
+                    precision = precision,
+                ),
+            )
             i += 1
         end
     end
-    HLayers = (HLayers..., KitML.ICNNLayer(layer_sizes[end], din, dout, identity; fw = fw, fb = fb, precision = precision))
+    HLayers = (
+        HLayers...,
+        KitML.ICNNLayer(
+            layer_sizes[end],
+            din,
+            dout,
+            identity;
+            fw = fw,
+            fb = fb,
+            precision = precision,
+        ),
+    )
 
 
     return ICNNChain(InLayer, HLayers)
@@ -270,14 +293,23 @@ function FastIC(
     fb = zeros,
     precision = Float32,
 )
-    initial_params() = vcat(vec(fw(precision, out, zin)), vec(fw(precision, out, xin)), fb(precision, out))
-    return FastIC{typeof(out),typeof(σ),typeof(initial_params)}(zin, xin, out, σ, initial_params)
+    initial_params() =
+        vcat(vec(fw(precision, out, zin)), vec(fw(precision, out, xin)), fb(precision, out))
+    return FastIC{typeof(out),typeof(σ),typeof(initial_params)}(
+        zin,
+        xin,
+        out,
+        σ,
+        initial_params,
+    )
 end
 
 function (f::FastIC)(z, x, p)
-    f.σ.(softplus.(reshape(p[1:(f.out*f.zin)], f.out, f.zin)) * z .+ 
+    f.σ.(
+        softplus.(reshape(p[1:(f.out*f.zin)], f.out, f.zin)) * z .+
         reshape(p[f.out*f.zin+1:(f.out*f.zin+f.out*f.xin)], f.out, f.xin) * x .+
-        p[(f.out*f.zin+f.out*f.xin+1):end])
+        p[(f.out*f.zin+f.out*f.xin+1):end],
+    )
 end
 
 DiffEqFlux.paramlength(f::FastIC) = f.out * (f.zin + f.xin + 1)
@@ -297,24 +329,47 @@ function FastICNN(
     fb = zeros::Function,
     precision = Float32,
 ) where {TI<:Integer,TT<:Union{Tuple,AbstractVector}}
-    
+
     InLayer = FastDense(din, layer_sizes[1], activation)
 
     HLayers = ()
     if length(layer_sizes) > 1
         i = 1
         for out in layer_sizes[2:end]
-            HLayers = (HLayers..., FastIC(layer_sizes[i], din, out, activation; fw = fw, fb = fb, precision = precision))
+            HLayers = (
+                HLayers...,
+                FastIC(
+                    layer_sizes[i],
+                    din,
+                    out,
+                    activation;
+                    fw = fw,
+                    fb = fb,
+                    precision = precision,
+                ),
+            )
             i += 1
         end
     end
-    HLayers = (HLayers..., FastIC(layer_sizes[end], din, dout, identity; fw = fw, fb = fb, precision = precision))
+    HLayers = (
+        HLayers...,
+        FastIC(
+            layer_sizes[end],
+            din,
+            dout,
+            identity;
+            fw = fw,
+            fb = fb,
+            precision = precision,
+        ),
+    )
 
     return FastICNN(InLayer, HLayers)
 
 end
 
-DiffEqFlux.initial_params(c::FastICNN) = vcat(initial_params.(c.InLayer), initial_params.(c.HLayer)...)
+DiffEqFlux.initial_params(c::FastICNN) =
+    vcat(initial_params.(c.InLayer), initial_params.(c.HLayer)...)
 
 function (m::FastICNN)(x::AbstractArray, p)
     z = m.InLayer(x, p[1:DiffEqFlux.paramlength(m.InLayer)])

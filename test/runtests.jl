@@ -5,7 +5,7 @@ begin
     u = collect(-5:0.5:5)
     ω = ones(21) ./ 21
     prim = [1.0, 0.0, 1.0]
-    w = KitML.KitBase.prim_conserve(prim, 5/3)
+    w = KitML.KitBase.prim_conserve(prim, 5 / 3)
     M = KitML.KitBase.maxwellian(u, prim)
     τ = 0.01
     f = deepcopy(M)
@@ -32,7 +32,8 @@ show(sm)
 sm(rand(21))
 
 icnnl = KitML.ICNNLayer(4, 4, 1, identity; fw = randn, fb = zeros, precision = Float32)
-icnnc = KitML.ICNNChain(4, 1, [10, 10], identity; fw = randn, fb = zeros, precision = Float32)
+icnnc =
+    KitML.ICNNChain(4, 1, [10, 10], identity; fw = randn, fb = zeros, precision = Float32)
 show(icnnl)
 show(icnnc)
 icnnl(randn(4))
@@ -67,9 +68,54 @@ fh = zeros(21)
 nn2 = Chain(Dense(42, 42, tanh), Dense(42, 42, tanh))
 p2 = initial_params(nn2)
 
-KitML.step_ube!(fw, fh, fh, w, prim, f, f, fw, fh, fh, u, ω, (2.0, 5/3, 0.01, 0.5, 1.0, 0.1, 0.001, zeros(3), zeros(3), nn2, p2); mode=:bgk)
-KitML.step_ube!(fw, fh, fh, w, prim, f, f, fw, fh, fh, u, ω, (2.0, 5/3, 0.01, 0.5, 1.0, 0.1, 0.001, zeros(3), zeros(3), nn2, p2); mode=:shakhov)
-KitML.step_ube!(fw, fh, fh, w, prim, f, f, fw, fh, fh, u, ω, (2.0, 5/3, 0.01, 0.5, 1.0, 0.1, 0.001, zeros(3), zeros(3), nn2, p2); mode=:nn)
+KitML.step_ube!(
+    fw,
+    fh,
+    fh,
+    w,
+    prim,
+    f,
+    f,
+    fw,
+    fh,
+    fh,
+    u,
+    ω,
+    (2.0, 5 / 3, 0.01, 0.5, 1.0, 0.1, 0.001, zeros(3), zeros(3), nn2, p2);
+    mode = :bgk,
+)
+KitML.step_ube!(
+    fw,
+    fh,
+    fh,
+    w,
+    prim,
+    f,
+    f,
+    fw,
+    fh,
+    fh,
+    u,
+    ω,
+    (2.0, 5 / 3, 0.01, 0.5, 1.0, 0.1, 0.001, zeros(3), zeros(3), nn2, p2);
+    mode = :shakhov,
+)
+KitML.step_ube!(
+    fw,
+    fh,
+    fh,
+    w,
+    prim,
+    f,
+    f,
+    fw,
+    fh,
+    fh,
+    u,
+    ω,
+    (2.0, 5 / 3, 0.01, 0.5, 1.0, 0.1, 0.001, zeros(3), zeros(3), nn2, p2);
+    mode = :nn,
+)
 
 # Closure
 m = KitML.create_neural_closure(10, 5; mode = :icnn)

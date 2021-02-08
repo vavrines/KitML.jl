@@ -2,8 +2,7 @@
 # Neural & Universal Closures
 # ============================================================
 
-export neural_closure,
-       create_neural_closure
+export neural_closure, create_neural_closure
 
 """
     neural_closure(X, model)
@@ -25,7 +24,14 @@ end
 
 Create neural closure model
 """
-function create_neural_closure(Din::T, Dout::T, Dhid = 10::T, Nhid = 1::T; acfun = relu, mode = :icnn) where {T<:Integer}
+function create_neural_closure(
+    Din::T,
+    Dout::T,
+    Dhid = 10::T,
+    Nhid = 1::T;
+    acfun = relu,
+    mode = :icnn,
+) where {T<:Integer}
     if mode == :dense
         # standard model
         model = Chain(Dense(Din, Dhid, acfun), Chain(Dhid, Nhid, acfun), Dense(Dhid, Dout))

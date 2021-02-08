@@ -2,8 +2,7 @@
 # I / O Methods
 # ============================================================
 
-export load_data,
-       save_model
+export load_data, save_model
 
 """
     load_data(file; mode = :csv, dlm = " ")
