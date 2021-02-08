@@ -315,9 +315,8 @@ end
 DiffEqFlux.paramlength(f::FastIC) = f.out * (f.zin + f.xin + 1)
 DiffEqFlux.initial_params(f::FastIC) = f.initial_params()
 
-struct FastICNN{T1,T2} <: DiffEqFlux.FastLayer
-    InLayer::T1
-    HLayer::T2
+struct FastICNN{T} <: DiffEqFlux.FastLayer
+    layers::T
 end
 
 function FastICNN(
@@ -330,14 +329,13 @@ function FastICNN(
     precision = Float32,
 ) where {TI<:Integer,TT<:Union{Tuple,AbstractVector}}
 
-    InLayer = FastDense(din, layer_sizes[1], activation)
+    layers = (FastDense(din, layer_sizes[1], activation),)
 
-    HLayers = ()
     if length(layer_sizes) > 1
         i = 1
         for out in layer_sizes[2:end]
-            HLayers = (
-                HLayers...,
+            layers = (
+                layers...,
                 FastIC(
                     layer_sizes[i],
                     din,
@@ -351,8 +349,8 @@ function FastICNN(
             i += 1
         end
     end
-    HLayers = (
-        HLayers...,
+    layers = (
+        layers...,
         FastIC(
             layer_sizes[end],
             din,
@@ -364,19 +362,19 @@ function FastICNN(
         ),
     )
 
-    return FastICNN(InLayer, HLayers)
+    return FastICNN(layers)
 
 end
 
-DiffEqFlux.initial_params(c::FastICNN) =
-    vcat(initial_params.(c.InLayer), initial_params.(c.HLayer)...)
+DiffEqFlux.initial_params(c::FastICNN) = vcat(initial_params.(c.layers)...)
 
 function (m::FastICNN)(x::AbstractArray, p)
-    z = m.InLayer(x, p[1:DiffEqFlux.paramlength(m.InLayer)])
-    counter = DiffEqFlux.paramlength(m.InLayer)
-    for i in eachindex(m.HLayer)
-        z = m.HLayer[i](z, x, p[counter+1:counter+DiffEqFlux.paramlength(m.HLayer[i])])
-        counter += DiffEqFlux.paramlength(m.HLayer[i])
+    z = m.layers[1](x, p[1:DiffEqFlux.paramlength(m.layers[1])])
+    counter = DiffEqFlux.paramlength(m.layers[1])
+    for i = 2:length(m.layers)
+        z = m.layers[i](z, x, p[counter+1:counter+DiffEqFlux.paramlength(m.layers[i])])
+        counter += DiffEqFlux.paramlength(m.layers[i])
     end
+
     return z
 end
