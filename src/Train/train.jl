@@ -24,6 +24,7 @@ Scientific machine learning training function
 - opt: optimizer
 - adtype: automatical differentiation type
 - args: rest arguments
+- device: cpu / gpu
 - maxiters: maximal iteration number
 - kwargs: keyword arguments
 """
@@ -34,9 +35,12 @@ function sci_train(
     opt = ADAM(),
     adtype = GalacticOptim.AutoZygote(),
     args...;
+    device = cpu,
     maxiters = 200::Integer,
     kwargs...,
 ) where {T<:DiffEqFlux.FastLayer}
+    data = data |> device
+    θ = θ |> device
     L = size(data[1], 2)
     loss(p) = sum(abs2, ann(data[1], p) - data[2]) / L
 
