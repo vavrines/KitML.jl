@@ -7,12 +7,13 @@ Copyright (c) 2021 Tianbai Xiao & Steffen Schotthöfer <tianbaixiao@gmail.com>
 module KitML
 
 using KitBase
+using KitBase.JLD2
 using Flux
 using DiffEqFlux
+using GalacticOptim
 using OrdinaryDiffEq
 using CSV
 using DataFrames
-using JLD2
 
 include("IO/io.jl")
 include("Equation/equation.jl")

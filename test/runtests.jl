@@ -51,6 +51,7 @@ Y = rand(21, 10)
 KitML.sci_train!(nn, (X, Y), ADAM(), 1, 1)
 KitML.sci_train!(nn, Flux.Data.DataLoader(X, Y), ADAM(), 1)
 KitML.sci_train(nn1, (X, Y))
+KitML.sci_train(nn1, (X, Y); save_best = true, maxiters = 200)
 
 # Equation
 df = KitML.ube_dfdt(f, (M, τ, (nn, p)), 0.1)

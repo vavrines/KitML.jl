@@ -5,22 +5,37 @@
 export sci_train, sci_train!
 
 """
-    sci_train(ann::FastChain, data, θ = initial_params(ann), opt = ADAM(), ni = 200)
+    sci_train(
+        ann::T,
+        data,
+        θ = initial_params(ann),
+        opt = ADAM(),
+        adtype = GalacticOptim.AutoZygote(),
+        args...;
+        maxiters = 200::Integer,
+        kwargs...,
+    ) where {T<:DiffEqFlux.FastLayer}
 
 Scientific machine learning training function
 
-- @args ann: neural network model
-- @args data: tuple (X, Y) of dataset
-- @args θ: parameters of neural network
-- @args opt: optimizer 
-- @args ni: iteration number
+- ann: neural network model
+- data: tuple (X, Y) of dataset
+- θ: parameters of neural network
+- opt: optimizer
+- adtype: automatical differentiation type
+- args: rest arguments
+- maxiters: maximal iteration number
+- kwargs: keyword arguments
 """
 function sci_train(
     ann::T,
     data,
     θ = initial_params(ann),
     opt = ADAM(),
-    ni = 200,
+    adtype = GalacticOptim.AutoZygote(),
+    args...;
+    maxiters = 200::Integer,
+    kwargs...,
 ) where {T<:DiffEqFlux.FastLayer}
     L = size(data[1], 2)
     loss(p) = sum(abs2, ann(data[1], p) - data[2]) / L
@@ -30,15 +45,11 @@ function sci_train(
         return false
     end
 
-    return DiffEqFlux.sciml_train(
-        loss,
-        θ,
-        opt;
-        cb = Flux.throttle(cb, 1),
-        progress = true,
-        save_best = true,
-        maxiters = ni,
-    )
+    f = GalacticOptim.OptimizationFunction((x, p) -> loss(x), adtype)
+    fi = GalacticOptim.instantiate_function(f, θ, adtype, nothing)
+    prob = GalacticOptim.OptimizationProblem(fi, θ; kwargs...)
+
+    return GalacticOptim.solve(prob, opt, args...; cb = Flux.throttle(cb, 1), maxiters = maxiters, kwargs...)
 end
 
 
