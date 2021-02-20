@@ -58,34 +58,34 @@ end
 
 
 """
-    sci_train!(ann, data, opt = ADAM(), ne = 1, nb = 256; device = cpu)
-    sci_train!(ann, dl::Flux.Data.DataLoader, opt = ADAM(), ne = 1; device = cpu)
+    sci_train!(ann, data::Tuple, opt = ADAM(); device = cpu, epoch = 1, batch = 1)
+    sci_train!(ann, dl::Flux.Data.DataLoader, opt = ADAM(); device = cpu, epoch = 1)
 
 Scientific machine learning training function
 
 - @args ann: neural network model
 - @args data: tuple (X, Y) of dataset
 - @args opt: optimizer 
-- @args ne: epoch number
-- @args nb: batch size
+- @args epoch: epoch number
+- @args batch: batch size
 - @args device: cpu / gpu
 """
-function sci_train!(ann, data::Tuple, opt = ADAM(), ne = 1, nb = 256; device = cpu)
+function sci_train!(ann, data::Tuple, opt = ADAM(); device = cpu, epoch = 1, batch = 1)
     X, Y = data |> device
     L = size(X, 2)
-    data = Flux.Data.DataLoader(X, Y, batchsize = nb, shuffle = true) |> device
+    data = Flux.Data.DataLoader(X, Y, batchsize = batch, shuffle = true) |> device
 
     ann = device(ann)
     ps = params(ann)
     loss(x, y) = sum(abs2, ann(x) - y) / L
     cb = () -> println("loss: $(loss(X, Y))")
 
-    Flux.@epochs ne Flux.train!(loss, ps, data, opt, cb = Flux.throttle(cb, 1))
+    Flux.@epochs epoch Flux.train!(loss, ps, data, opt, cb = Flux.throttle(cb, 1))
 
     return nothing
 end
 
-function sci_train!(ann, dl::Flux.Data.DataLoader, opt = ADAM(), ne = 1; device = cpu)
+function sci_train!(ann, dl::Flux.Data.DataLoader, opt = ADAM(); device = cpu, epoch = 1)
     X, Y = dl.data |> device
     L = size(X, 2)
     dl = dl |> device
@@ -95,7 +95,7 @@ function sci_train!(ann, dl::Flux.Data.DataLoader, opt = ADAM(), ne = 1; device 
     loss(x, y) = sum(abs2, ann(x) - y) / L
     cb = () -> println("loss: $(loss(X, Y))")
 
-    Flux.@epochs ne Flux.train!(loss, ps, dl, opt, cb = Flux.throttle(cb, 1))
+    Flux.@epochs epoch Flux.train!(loss, ps, dl, opt, cb = Flux.throttle(cb, 1))
 
     return nothing
 end
