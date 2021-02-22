@@ -8,6 +8,7 @@ module KitML
 
 using KitBase
 using KitBase.JLD2
+using KitBase.PyCall
 using Flux
 using DiffEqFlux
 using GalacticOptim
