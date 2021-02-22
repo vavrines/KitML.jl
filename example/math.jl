@@ -2,12 +2,13 @@
 function ComputeSphericalBasis(LMaxDegree,spatialDim,quadpts)
     my = 0
     phi = 0
-    monomialBasis = zeros(size(quadpts,1),GetBasisSize(LMaxDegree,spatialDim))
-    for idx_quad in 0:(size(quadpts,1)-1)
-        ptsSphere = transformToSphere(quadpts[idx_quad+1])
-        my = ptsSphere[0]
-        phi = ptsSphere[1]
-        monomialBasis[idx_quad+1] = ComputeShpericalBasis3DPt(my,phi,LMaxDegree)
+    monomialBasis = zeros(GetBasisSize(LMaxDegree,spatialDim),size(quadpts,1))
+    for idx_quad in 0:(size(quadpts)[1]-1)
+        ptsSphere = transformToSphere(quadpts[idx_quad+1,:])
+
+        my = ptsSphere[1]
+        phi = ptsSphere[2]
+        monomialBasis[:,idx_quad+1]  = ComputeShpericalBasis3DPt(my,phi,LMaxDegree)
     end
 
     return monomialBasis
@@ -38,6 +39,8 @@ function ComputeShpericalBasis3DPt(my, phi, LMaxDegree)
             end
         end
     end
+    
+    return basisAtPt
 end
 
 # Helper Functions
@@ -58,7 +61,7 @@ function Power(  basis,  exponent )
         return 1.0
     end
     result = basis;
-    for i in range(1,exponent)
+    for i in 1:exponent
         result = result * basis
     end
     return result
@@ -77,7 +80,6 @@ function GetCurrDegreeSize(currDegree, spatialDim)
 end
 
 function transformToSphere(pointsKarthesian)
-    
     my = pointsKarthesian[3]
     phi = 0
     if (pointsKarthesian[2]>0)
