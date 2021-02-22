@@ -99,3 +99,13 @@ function sci_train!(ann, dl::Flux.Data.DataLoader, opt = ADAM(); device = cpu, e
 
     return nothing
 end
+
+# ------------------------------------------------------------
+# TensorFlow
+# ------------------------------------------------------------
+function sci_train!(ann::PyObject, data::Tuple; device = cpu, epoch = 1)
+    X, Y = data
+    ann.fit(X, Y, epochs = epoch)
+
+    return nothing
+end
