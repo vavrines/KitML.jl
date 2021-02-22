@@ -1,4 +1,4 @@
-using LinearAlgebra, CUDA, Flux
+using LinearAlgebra, CUDA, Flux, JLD2
 import KitML
 
 cd(@__DIR__)
@@ -9,15 +9,15 @@ Y = data.h |> permutedims
 
 data = nothing # deallocate
 
-nn = KitML.ICNNChain(4, 1, [16, 32, 32, 8], tanh)
-KitML.sci_train!(nn, (X, Y), ADAM(); epoch = 1, batch = 4000, device = cpu)
+#nn = KitML.ICNNChain(4, 1, [16, 32, 32, 8], tanh)
+@load "model.jld2" nn
 
 loss(x, y) = sum(abs2, nn(x) - y) / 15968000
 
 for iter = 1:1000
-    KitML.sci_train!(nn, (X, Y), ADAM(); epoch = 5, batch = 4000, device = cpu)
+    KitML.sci_train!(nn, (X, Y), ADAM(); epoch = 2, batch = 4000, device = cpu)
 
-    if iter % 100 == 0
+    if iter % 2 == 0
         @show loss(X, Y)
         KitML.save_model(nn)
     end
