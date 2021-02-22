@@ -2,6 +2,7 @@ using LinearAlgebra, Plots, JLD2
 using Flux, Flux.Zygote, Optim, DiffEqFlux
 using KitBase, ProgressMeter
 import KitML
+include("math.jl")
 
 begin
     # space
@@ -29,10 +30,17 @@ begin
 
     # moments
     L = 1
-    ne = (L + 1)^2
+    #ne = (L + 1)^2
+    ne = GetBasisSize(L,3)
+
     phi = zeros(ne, nx, ny)
     α = zeros(ne, nx, ny)
-    m = KitBase.eval_spherharmonic(points, L)
+    #m = KitBase.eval_spherharmonic(points, L)
+    #m = ComputeSphericalBasis(L,3,points)
+    m = ComputeSphericalBasisAnalytical(points)
+
+    print(size(m))
+
 end
 
 function is_absorb(x::T, y::T) where {T<:Real}
@@ -94,7 +102,7 @@ global t = 0.0
 flux1 = zeros(ne, nx + 1, ny)
 flux2 = zeros(ne, nx, ny + 1)
 
-@showprogress for iter = 1:50
+@showprogress for iter = 1:100
     # regularization
     @inbounds Threads.@threads for j = 1:ny
         for i = 1:nx
