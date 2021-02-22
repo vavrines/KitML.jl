@@ -14,6 +14,19 @@ function ComputeSphericalBasis(LMaxDegree,spatialDim,quadpts)
     return monomialBasis
 end
 
+function ComputeSphericalBasisAnalytical(quadpts)
+    # Hardcoded solution for L = 1, spatialDim = 3
+    monomialBasis = zeros(4,size(quadpts,1))
+    for idx_quad in 0:(size(quadpts)[1]-1)
+        monomialBasis[1,idx_quad+1]  = 1
+        monomialBasis[1,idx_quad+1]  = quadpts[idx_quad+1,1]
+        monomialBasis[1,idx_quad+1]  = quadpts[idx_quad+1,2]
+        monomialBasis[1,idx_quad+1]  = quadpts[idx_quad+1,3]
+    end
+
+    return monomialBasis
+end
+
 function ComputeShpericalBasis3DPt(my, phi, LMaxDegree)
     spatialDim = 3
     idx_vector = 0
