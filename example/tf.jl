@@ -1,5 +1,4 @@
 using PyCall
-using Conda
 
 tf = pyimport("tensorflow")
 
