@@ -2,6 +2,7 @@ using LinearAlgebra, Plots, JLD2
 using Flux, Flux.Zygote, Optim, DiffEqFlux
 using KitBase, ProgressMeter
 import KitML
+include("math.jl")
 
 # one-cell simplification
 begin
@@ -10,12 +11,14 @@ begin
     weights = KitBase.quadrature_weights(points, triangulation)
     nq = size(points, 1)
     L = 1
-    ne = (L + 1)^2
+    # ne = (L + 1)^2
+    ne = GetBasisSize(L,3)
 
     α = zeros(ne)
     u0 = [2.0, 0.0, 0.0, 0.0]
-    m = KitBase.eval_spherharmonic(points, L)
-
+    #m = KitBase.eval_spherharmonic(points, L)
+    m = ComputeSphericalBasis(L,3,points)
+    print(m)
     res = KitBase.optimize_closure(α, m, weights, u0, KitBase.maxwell_boltzmann_dual)
     u = KitBase.realizable_reconstruct(
         res.minimizer,
