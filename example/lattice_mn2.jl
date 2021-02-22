@@ -1,0 +1,157 @@
+using LinearAlgebra, Plots, JLD2
+using Flux, Flux.Zygote, Optim, DiffEqFlux
+using KitBase, ProgressMeter
+import KitML
+
+begin
+    # space
+    x0 = -3.5
+    x1 = 3.5
+    y0 = -3.5
+    y1 = 3.5
+    nx = 80#100
+    ny = 80#100
+    dx = (x1 - x0) / nx
+    dy = (y1 - y0) / ny
+
+    pspace = KitBase.PSpace2D(x0, x1, nx, y0, y1, ny)
+
+    # time
+    tEnd = 1.0
+    cfl = 0.5
+    dt = cfl / 2 * (dx * dy) / (dx + dy)
+
+    # quadrature
+    quadratureorder = 5
+    points, triangulation = KitBase.octa_quadrature(quadratureorder)
+    weights = KitBase.quadrature_weights(points, triangulation)
+    nq = size(points, 1)
+
+    # moments
+    L = 1
+    ne = (L + 1)^2
+    phi = zeros(ne, nx, ny)
+    α = zeros(ne, nx, ny)
+    m = KitBase.eval_spherharmonic(points, L)
+end
+
+function is_absorb(x::T, y::T) where {T<:Real}
+    cd = Array{Bool}(undef, 11)
+    cd .= false
+
+    cd[1] = -2.5<x<-1.5 && 1.5<y<2.5
+    cd[2] = -2.5<x<-1.5 && -0.5<y<0.5
+    cd[3] = -2.5<x<-1.5 && -2.5<y<-1.5
+    cd[4] = -1.5<x<-0.5 && 0.5<y<1.5
+    cd[5] = -1.5<x<-0.5 && -1.5<y<-0.5
+    cd[6] = -0.5<x<0.5 && -2.5<y<-1.5
+    cd[7] = 0.5<x<1.5 && 0.5<y<1.5
+    cd[8] = 0.5<x<1.5 && -1.5<y<-0.5
+    cd[9] = 1.5<x<2.5 && 1.5<y<2.5
+    cd[10] = 1.5<x<2.5 && -0.5<y<0.5
+    cd[11] = 1.5<x<2.5 && -2.5<y<-1.5
+
+    if any(cd) == true
+        return true
+    else
+        return false
+    end
+end
+
+# particle
+begin
+    σs = zeros(Float64, nx, ny)
+    σa = zeros(Float64, nx, ny)
+    for i = 1:nx, j = 1:ny
+        if is_absorb(pspace.x[i, j], pspace.y[i, j])
+            σs[i, j] = 0.0
+            σa[i, j] = 10.0
+        else
+            σs[i, j] = 1.0
+            σa[i, j] = 0.0
+        end
+    end
+    σt = σs + σa
+    σq = zeros(Float64, nx, ny)
+    for i = 1:nx, j = 1:ny
+        if -0.5<pspace.x[i, j]<0.5 && -0.5<pspace.y[i, j]<0.5
+            σq[i, j] = 1.0 / (4.0 * π)
+        else
+            σq[i, j] = 0.0
+        end
+    end
+end
+
+#contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], σq')
+
+for j = 1:nx
+    for i = 1:ny
+        phi[1, i, j] = 1e-6
+    end
+end
+
+
+global t = 0.0
+flux1 = zeros(ne, nx + 1, ny)
+flux2 = zeros(ne, nx, ny + 1)
+
+@showprogress for iter = 1:50
+    # regularization
+    @inbounds Threads.@threads for j = 1:ny
+        for i = 1:nx
+            res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
+            α[:, i, j] .= res.minimizer
+            
+            phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+        end
+    end
+    
+    # flux
+    fη1 = zeros(nq)
+    @inbounds for j = 1:ny
+        for i = 2:nx
+            KitBase.flux_kfvs!(fη1, KitBase.maxwell_boltzmann_dual.(α[:, i-1, j]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 1], dt)
+            
+            for k in axes(flux1, 1)
+                flux1[k, i, j] = sum(m[k, :] .* weights .* fη1)
+            end
+        end
+    end
+
+    fη2 = zeros(nq)
+    @inbounds for i = 1:nx
+        for j = 2:ny
+            KitBase.flux_kfvs!(fη2, KitBase.maxwell_boltzmann_dual.(α[:, i, j-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 2], dt)
+            
+            for k in axes(flux2, 1)
+                flux2[k, i, j] = sum(m[k, :] .* (weights .* fη2))
+            end
+        end
+    end
+    
+    # update
+    @inbounds for j = 2:ny-1
+        for i = 2:nx-1
+            for q = 1:1
+                phi[q, i, j] =
+                    phi[q, i, j] +
+                    (flux1[q, i, j] - flux1[q, i+1, j]) / dx +
+                    (flux2[q, i, j] - flux2[q, i, j+1]) / dy +
+                    (σs[i, j] * phi[q, i, j] - σt[i, j] * phi[q, i, j]) * dt +
+                    σq[i, j] * dt
+            end
+
+            for q = 2:ne
+                phi[q, i, j] =
+                    phi[q, i, j] +
+                    (flux1[q, i, j] - flux1[q, i+1, j]) / dx +
+                    (flux2[q, i, j] - flux2[q, i, j+1]) / dy +
+                    (-σt[i, j] * phi[q, i, j]) * dt
+            end
+        end
+    end
+
+    global t += dt
+end
+
+contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
