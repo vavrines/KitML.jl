@@ -12,10 +12,33 @@ Neural closure model computation
 @args X: model input
 @args model: neural network model
 """
-function neural_closure(X, model)
-    res = model(X)
+function neural_closure(model, X)
+    return model(X)
+end
 
-    return res
+function neural_closure(model::PyObject, X)
+    py"""
+    import tensorflow as tf
+
+    def dnn(model, input):
+        '''
+        Input: input.shape = (nCells,nMaxMoment), nMaxMoment = 9 in case of MK3
+        Output: Gradient of the network wrt input
+        '''
+        # predictions = model.predict(input)
+
+        x_model = tf.Variable(input)
+
+        with tf.GradientTape() as tape:
+            #predictions = model.predict(x_model)
+            predictions = model(x_model)
+
+        gradients = tape.gradient(predictions, x_model)
+
+        return gradients.numpy()
+    """
+
+    return py"dnn"(model, X)
 end
 
 

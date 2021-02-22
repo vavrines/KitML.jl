@@ -1,4 +1,5 @@
 import KitML
+using KitML.PyCall
 
 # load tensorflow model
 cd(@__DIR__)
@@ -15,3 +16,5 @@ KitML.sci_train!(model, (X, Y); epoch = 2)
 model.fit(X, Y, epochs=2)
 
 model.predict(X)
+
+KitML.neural_closure(model, X)
