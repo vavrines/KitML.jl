@@ -5,6 +5,7 @@ import KitML
 
 cd(@__DIR__)
 include("math.jl")
+model = KitML.load_model("best_model.h5"; mode = :tf)
 
 begin
     # space
@@ -33,10 +34,10 @@ begin
     # moments
     L = 1
     ne = (L + 1)^2
-    phi = zeros(ne, nx, ny)
-    α = zeros(ne, nx, ny)
+    phi = zeros(Float32, ne, nx, ny)
+    α = zeros(Float32, ne, nx, ny)
     #m = KitBase.eval_spherharmonic(points, L)
-    m = ComputeSphericalBasis(1, 3, points)
+    m = ComputeSphericalBasisAnalytical(points)
 end
 
 function is_absorb(x::T, y::T) where {T<:Real}
@@ -84,7 +85,7 @@ begin
     end
 end
 
-contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], σs')
+#contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], σs')
 
 for j = 1:nx
     for i = 1:ny
@@ -96,14 +97,32 @@ global t = 0.0
 flux1 = zeros(ne, nx + 1, ny)
 flux2 = zeros(ne, nx, ny + 1)
 
-@showprogress for iter = 1:1#50
+αT = zeros(nx*ny, ne)
+phiT = zeros(nx*ny, ne)
+
+@showprogress for iter = 1:100#20
     # regularization
+    #=
     @inbounds Threads.@threads for j = 1:ny
         for i = 1:nx
             res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
             α[:, i, j] .= res.minimizer
             
             phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+        end
+    end
+    =#
+    
+    @inbounds for i = 1:ne
+        phiT[:, i] .= phi[i, :, :][:]
+    end
+    αT = KitML.neural_closure(model, phiT)
+    @inbounds for i = 1:ne
+        α[i, :, :] .= reshape(αT[:, i], nx, ny)
+    end
+    @inbounds Threads.@threads for j = 1:ny
+        for i = 1:nx
+            phi[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
         end
     end
     
@@ -139,7 +158,7 @@ flux2 = zeros(ne, nx, ny + 1)
                     (flux1[q, i, j] - flux1[q, i+1, j]) / dx +
                     (flux2[q, i, j] - flux2[q, i, j+1]) / dy +
                     (σs[i, j] * phi[q, i, j] - σt[i, j] * phi[q, i, j]) * dt +
-                    σq[i, j] * dt
+                    σq[i, j] * dt * 10 * 10
             end
 
             for q = 2:ne
@@ -156,3 +175,4 @@ flux2 = zeros(ne, nx, ny + 1)
 end
 
 contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
+
