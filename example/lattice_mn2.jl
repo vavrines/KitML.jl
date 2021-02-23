@@ -37,7 +37,7 @@ begin
     α = zeros(ne, nx, ny)
     #m = KitBase.eval_spherharmonic(points, L)
     #m = ComputeSphericalBasis(L,3,points)
-    m = ComputeSphericalBasisAnalytical(points)
+    m = ComputeSphericalBasisAnalytical(L,3,points)
 
     print(size(m))
 

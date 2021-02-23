@@ -14,14 +14,15 @@ function ComputeSphericalBasis(LMaxDegree,spatialDim,quadpts)
     return monomialBasis
 end
 
-function ComputeSphericalBasisAnalytical(quadpts)
+function ComputeSphericalBasisAnalytical(L,spatialDim,quadpts)
     # Hardcoded solution for L = 1, spatialDim = 3
+    
     monomialBasis = zeros(4,size(quadpts,1))
     for idx_quad in 0:(size(quadpts)[1]-1)
         monomialBasis[1,idx_quad+1]  = 1
-        monomialBasis[2,idx_quad+1]  = quadpts[idx_quad+1,1]
-        monomialBasis[3,idx_quad+1]  = quadpts[idx_quad+1,2]
-        monomialBasis[4,idx_quad+1]  = quadpts[idx_quad+1,3]
+        monomialBasis[2,idx_quad+1]  = quadpts[idx_quad+1,1] # x
+        monomialBasis[3,idx_quad+1]  = quadpts[idx_quad+1,2] # y
+        monomialBasis[4,idx_quad+1]  = quadpts[idx_quad+1,3] # z 
     end
 
     return monomialBasis
@@ -101,5 +102,4 @@ function transformToSphere(pointsKarthesian)
         phi = 2*π-acos(pointsKarthesian[1])
     end    
     return [my,phi]
-
 end
