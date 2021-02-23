@@ -37,7 +37,7 @@ begin
     phi = zeros(Float32, ne, nx, ny)
     α = zeros(Float32, ne, nx, ny)
     #m = KitBase.eval_spherharmonic(points, L)
-    m = ComputeSphericalBasisAnalytical(points)
+    m = ComputeSphericalBasisAnalytical(L, 3, points)
 end
 
 function is_absorb(x::T, y::T) where {T<:Real}
@@ -100,7 +100,7 @@ flux2 = zeros(ne, nx, ny + 1)
 αT = zeros(nx*ny, ne)
 phiT = zeros(nx*ny, ne)
 
-@showprogress for iter = 1:100#20
+@showprogress for iter = 1:1#20
     # regularization
     #=
     @inbounds Threads.@threads for j = 1:ny
