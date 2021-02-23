@@ -3,6 +3,37 @@ using Flux, Flux.Zygote, Optim, DiffEqFlux
 using KitBase, ProgressMeter
 import KitML
 
+maxwell_boltzmann(x) = x * log(x) - x
+
+maxwell_boltzmann_prime(x) = log(x)
+
+function kinetic_entropy(α, m, weights)
+    B = KitBase.maxwell_boltzmann_dual_prime.(α' * m)[:]
+    return sum(maxwell_boltzmann.(B) .* weights)
+end
+
+function is_absorb(x::T, y::T) where {T<:Real}
+    cds = Array{Bool}(undef, 11) # conditions
+
+    cds[1] = -2.5<x<-1.5 && 1.5<y<2.5
+    cds[2] = -2.5<x<-1.5 && -0.5<y<0.5
+    cds[3] = -2.5<x<-1.5 && -2.5<y<-1.5
+    cds[4] = -1.5<x<-0.5 && 0.5<y<1.5
+    cds[5] = -1.5<x<-0.5 && -1.5<y<-0.5
+    cds[6] = -0.5<x<0.5 && -2.5<y<-1.5
+    cds[7] = 0.5<x<1.5 && 0.5<y<1.5
+    cds[8] = 0.5<x<1.5 && -1.5<y<-0.5
+    cds[9] = 1.5<x<2.5 && 1.5<y<2.5
+    cds[10] = 1.5<x<2.5 && -0.5<y<0.5
+    cds[11] = 1.5<x<2.5 && -2.5<y<-1.5
+
+    if any(cds) == true
+        return true
+    else
+        return false
+    end
+end
+
 cd(@__DIR__)
 include("math.jl")
 model = KitML.load_model("best_model.h5"; mode = :tf)
@@ -35,31 +66,10 @@ begin
     L = 1
     ne = (L + 1)^2
     phi = zeros(Float32, ne, nx, ny)
+    phi[1, :, :] .= 1e-6
     α = zeros(Float32, ne, nx, ny)
     #m = KitBase.eval_spherharmonic(points, L)
     m = ComputeSphericalBasisAnalytical(L, 3, points)
-end
-
-function is_absorb(x::T, y::T) where {T<:Real}
-    cds = Array{Bool}(undef, 11) # conditions
-
-    cds[1] = -2.5<x<-1.5 && 1.5<y<2.5
-    cds[2] = -2.5<x<-1.5 && -0.5<y<0.5
-    cds[3] = -2.5<x<-1.5 && -2.5<y<-1.5
-    cds[4] = -1.5<x<-0.5 && 0.5<y<1.5
-    cds[5] = -1.5<x<-0.5 && -1.5<y<-0.5
-    cds[6] = -0.5<x<0.5 && -2.5<y<-1.5
-    cds[7] = 0.5<x<1.5 && 0.5<y<1.5
-    cds[8] = 0.5<x<1.5 && -1.5<y<-0.5
-    cds[9] = 1.5<x<2.5 && 1.5<y<2.5
-    cds[10] = 1.5<x<2.5 && -0.5<y<0.5
-    cds[11] = 1.5<x<2.5 && -2.5<y<-1.5
-
-    if any(cds) == true
-        return true
-    else
-        return false
-    end
 end
 
 begin
@@ -87,45 +97,81 @@ end
 
 #contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], σs')
 
-for j = 1:nx
-    for i = 1:ny
-        phi[1, i, j] = 1e-6
+global t = 0.0
+flux1 = zeros(Float32, ne, nx + 1, ny)
+flux2 = zeros(Float32, ne, nx, ny + 1)
+
+αT = zeros(Float32, nx*ny, ne)
+phiT = zeros(Float32, nx*ny, ne)
+
+global X = zeros(Float32, 1, ne)
+global Y = zeros(Float32, 1, 1)
+
+res = KitBase.optimize_closure(X[1, :], m, weights, phi[:, nx÷2, ny÷2], KitBase.maxwell_boltzmann_dual)
+X[1, :] .= res.minimizer       
+Y[1, 1] = kinetic_entropy(X[1, :], m, weights)
+
+#=
+# compare mathematical & NN optimizer
+α0 = similar(α)
+@inbounds Threads.@threads for j = 1:ny
+    for i = 1:nx
+        res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
+        α0[:, i, j] .= res.minimizer
     end
 end
 
-global t = 0.0
-flux1 = zeros(ne, nx + 1, ny)
-flux2 = zeros(ne, nx, ny + 1)
+@inbounds for i = 1:ne
+    phiT[:, i] .= phi[i, :, :][:]
+end
+αT = KitML.neural_closure(model, phiT)
+α1 = similar(α)
+@inbounds for i = 1:ne
+    α1[i, :, :] .= reshape(αT[:, i], nx, ny)
+end
 
-αT = zeros(nx*ny, ne)
-phiT = zeros(nx*ny, ne)
+plot(pspace.x[1:nx, 1], α0[1, :, 40], label="Newton", xlabel="x", ylabel="alpha_0")
+plot!(pspace.x[1:nx, 1], α1[1, :, 40], label="NN")
+=#
 
-@showprogress for iter = 1:1#20
+phi_temp = zero(phi)
+phi_old = zero(phi)
+@showprogress for iter = 1:10#20
+    phi_old .= phi
+
     # regularization
-    #=
-    @inbounds Threads.@threads for j = 1:ny
-        for i = 1:nx
-            res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
-            α[:, i, j] .= res.minimizer
-            
-            phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
-        end
-    end
-    =#
-    
     @inbounds for i = 1:ne
         phiT[:, i] .= phi[i, :, :][:]
     end
-    αT = KitML.neural_closure(model, phiT)
+    αT .= KitML.neural_closure(model, phiT)
     @inbounds for i = 1:ne
         α[i, :, :] .= reshape(αT[:, i], nx, ny)
     end
     @inbounds Threads.@threads for j = 1:ny
         for i = 1:nx
-            phi[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
+            phi_temp[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
         end
     end
-    
+
+    @inbounds for j = 1:ny
+        for i = 1:nx
+            #@show norm(phi_temp[:, i, j] - phi_old[:, i, j], 2)
+
+            if norm(phi_temp[:, i, j] - phi_old[:, i, j], 2) > 1e-1
+                res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
+                α[:, i, j] .= res.minimizer
+                phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+
+                if phi[1, i, j] > 0.01
+                    X = vcat(X, permutedims(α[:, i, j]))
+                    Y = vcat(Y, kinetic_entropy(α[:, i, j], m, weights))
+                end
+            else
+                phi[:, i, j] .= phi_temp[:, i, j]
+            end
+        end
+    end
+
     # flux
     fη1 = zeros(nq)
     @inbounds for j = 1:ny
@@ -158,7 +204,7 @@ phiT = zeros(nx*ny, ne)
                     (flux1[q, i, j] - flux1[q, i+1, j]) / dx +
                     (flux2[q, i, j] - flux2[q, i, j+1]) / dy +
                     (σs[i, j] * phi[q, i, j] - σt[i, j] * phi[q, i, j]) * dt +
-                    σq[i, j] * dt * 10 * 10
+                    σq[i, j] * dt * 100.0
             end
 
             for q = 2:ne
@@ -172,7 +218,16 @@ phiT = zeros(nx*ny, ne)
     end
 
     global t += dt
+
+    if iter%9 == 0
+        model.fit(X, Y, epochs=2)
+        
+        X = zeros(Float32, 1, ne)
+        Y = zeros(Float32, 1, 1)
+        res = KitBase.optimize_closure(X[1, :], m, weights, phi[:, nx÷2, ny÷2], KitBase.maxwell_boltzmann_dual)
+        X[1, :] .= res.minimizer       
+        Y[1, 1] = kinetic_entropy(X[1, :], m, weights)
+    end
 end
 
 contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
-
