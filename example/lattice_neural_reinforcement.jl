@@ -93,34 +93,33 @@ end
 #contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], σs')
 
 #Training loop
+
+
+global t = 0.0
+flux1 = zeros(ne, nx + 1, ny)
+flux2 = zeros(ne, nx, ny + 1)
+
+αT = zeros(nx*ny, ne)
+phiT = zeros(nx*ny, ne)
+
+
+    # Start Time loop
+
+#begin
 for metaIter = 1:100
     #initial conditions
+    
+    phi = zeros(Float32, ne, nx, ny)
+
     for j = 1:nx
         for i = 1:ny
             phi[1, i, j] = 1e-6
         end
     end
+    
 
-    global t = 0.0
-    flux1 = zeros(ne, nx + 1, ny)
-    flux2 = zeros(ne, nx, ny + 1)
-
-    αT = zeros(nx*ny, ne)
-    phiT = zeros(nx*ny, ne)
-
-    @showprogress for iter = 1:100#20
-        # regularization
-        #=
-        @inbounds Threads.@threads for j = 1:ny
-            for i = 1:nx
-                res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
-                α[:, i, j] .= res.minimizer
-                
-                phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
-            end
-        end
-        =#
-        
+    for iter = 1:400
+      
         #restructuring of the matrix
         @inbounds for i = 1:ne
             phiT[:, i] .= phi[i, :, :][:]
@@ -167,9 +166,12 @@ for metaIter = 1:100
 
         #retrain network on cells with too much error, if there is any
         if errorsFound
-            print("\nCurrent number of  errorous datapoints: ")
-            println(size(h_train)[1])
-
+            print("Current number of  errorous datapoints: ")
+            print(size(h_train)[1])
+            print(" of ")
+            print(nx*ny)
+            print(" in iter ")
+            println(iter)
             # Transform into matrix format
             phiTrainMat = zeros(size(h_train)[1],4)
             hTrainMat = zeros(size(h_train)[1],1)
@@ -180,7 +182,8 @@ for metaIter = 1:100
                 phiTrainMat[i,4] = phi_train[4*(i-1)+4]
                 hTrainMat[i,1]= h_train[i]
             end
-            model.fit(phiTrainMat,hTrainMat,epochs =30,verbose= 1)
+            model.fit(phiTrainMat,hTrainMat,epochs =50,batch_size = 32,validation_split=0.0,verbose= 0)
+            println("model retrained")
             model.save("best_model.h5")
         end
         
@@ -231,7 +234,8 @@ for metaIter = 1:100
 
         global t += dt
     end
+    global t=0
 end
+contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
 
-#contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
 
