@@ -1,4 +1,12 @@
+########################
+maxwell_boltzmann_primal(f) = f.* log.(f) - f 
 
+function computeEntropyH(α, m, ω,η::Function, η_prime_dual::Function)
+    result = sum(η(η_prime_dual.(α' * m)[:] ).* ω )
+    return result
+end
+
+#############################################
 function ComputeSphericalBasis(LMaxDegree,spatialDim,quadpts)
     my = 0
     phi = 0
@@ -14,7 +22,7 @@ function ComputeSphericalBasis(LMaxDegree,spatialDim,quadpts)
     return monomialBasis
 end
 
-function ComputeSphericalBasisAnalytical(L,spatialDim,quadpts)
+function ComputeSphericalBasisAnalytical(quadpts::Matrix{Float64})
     # Hardcoded solution for L = 1, spatialDim = 3
     
     monomialBasis = zeros(4,size(quadpts,1))

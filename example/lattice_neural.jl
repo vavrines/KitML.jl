@@ -33,7 +33,8 @@ begin
 
     # moments
     L = 1
-    ne = (L + 1)^2
+    #ne = (L + 1)^2
+    ne = GetBasisSize(L,3)
     phi = zeros(Float32, ne, nx, ny)
     α = zeros(Float32, ne, nx, ny)
     #m = KitBase.eval_spherharmonic(points, L)
