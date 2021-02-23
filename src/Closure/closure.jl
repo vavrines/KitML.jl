@@ -22,7 +22,7 @@ function neural_closure(model::PyObject, X)
 
     def dnn(model, input):
         '''
-        Input: input.shape = (nCells,nMaxMoment), nMaxMoment = 9 in case of MK3
+        Input: input.shape = (nCells,nMaxMoment), nMaxMoment = 4 in case of MK7
         Output: Gradient of the network wrt input
         '''
         # predictions = model.predict(input)
