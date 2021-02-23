@@ -15,7 +15,7 @@ data = nothing # deallocate
 loss(x, y) = sum(abs2, nn(x) - y) / 15968000
 
 for iter = 1:1000
-    KitML.sci_train!(nn, (X, Y), ADAM(); epoch = 2, batch = 4000, device = cpu)
+    KitML.sci_train!(nn, (X, Y), ADAM(); epoch = 2, batch = 4000, device = gpu)
 
     if iter % 2 == 0
         @show loss(X, Y)
