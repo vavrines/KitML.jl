@@ -32,8 +32,8 @@ begin
     x1 = 1.5
     y0 = -1.5
     y1 = 1.5
-    nx = 50#100
-    ny = 50#100
+    nx = 60#100
+    ny = 60#100
     dx = (x1 - x0) / nx
     dy = (y1 - y0) / ny
 
@@ -83,9 +83,11 @@ flux1 = zeros(ne, nx + 1, ny)
 flux2 = zeros(ne, nx, ny + 1)
 
 # mechanical solver
-@showprogress for iter = 1:20
+anim = @animate for iter = 1:140
+    println("iteration $(iter)")
+
     # regularization
-    Threads.@threads for j = 1:ny
+    @inbounds Threads.@threads for j = 1:ny
         for i = 1:nx
             res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
             α[:, i, j] .= res.minimizer
@@ -96,7 +98,7 @@ flux2 = zeros(ne, nx, ny + 1)
     
     # flux
     fη1 = zeros(nq)
-    for j = 1:ny
+    @inbounds for j = 1:ny
         for i = 2:nx
             KitBase.flux_kfvs!(fη1, KitBase.maxwell_boltzmann_dual.(α[:, i-1, j]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 1], dt)
             
@@ -107,7 +109,7 @@ flux2 = zeros(ne, nx, ny + 1)
     end
 
     fη2 = zeros(nq)
-    for i = 1:nx
+    @inbounds for i = 1:nx
         for j = 2:ny
             KitBase.flux_kfvs!(fη2, KitBase.maxwell_boltzmann_dual.(α[:, i, j-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 2], dt)
             
@@ -118,7 +120,7 @@ flux2 = zeros(ne, nx, ny + 1)
     end
     
     # update
-    for j = 2:ny-1
+    @inbounds for j = 2:ny-1
         for i = 2:nx-1
             for q = 1:1
                 phi[q, i, j] =
@@ -139,8 +141,11 @@ flux2 = zeros(ne, nx, ny + 1)
     end
 
     global t += dt
+    contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
 end
-contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
+
+cd(@__DIR__)
+gif(anim, "linesource_mn.gif")
 
 begin
     # create neural network

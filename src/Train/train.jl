@@ -16,17 +16,19 @@ export sci_train, sci_train!
         kwargs...,
     ) where {T<:DiffEqFlux.FastLayer}
 
+    sci_train(loss::Function, θ, opt, adtype = GalacticOptim.AutoZygote(), args...; kwargs...)
+
 Scientific machine learning training function
 
-- ann: neural network model
-- data: tuple (X, Y) of dataset
-- θ: parameters of neural network
-- opt: optimizer
-- adtype: automatical differentiation type
-- args: rest arguments
-- device: cpu / gpu
-- maxiters: maximal iteration number
-- kwargs: keyword arguments
+- @args ann: neural network model
+- @args data: tuple (X, Y) of dataset
+- @args θ: parameters of neural network
+- @args opt: optimizer
+- @args adtype: automatical differentiation type
+- @args args: rest arguments
+- @args device: cpu / gpu
+- @args maxiters: maximal iteration number
+- @args kwargs: keyword arguments
 """
 function sci_train(
     ann::T,
@@ -54,6 +56,13 @@ function sci_train(
     prob = GalacticOptim.OptimizationProblem(fi, θ; kwargs...)
 
     return GalacticOptim.solve(prob, opt, args...; cb = Flux.throttle(cb, 1), maxiters = maxiters, kwargs...)
+end
+
+function sci_train(loss::Function, θ, opt, adtype = GalacticOptim.AutoZygote(), args...; kwargs...)
+    f = GalacticOptim.OptimizationFunction((x, p) -> loss(x), adtype)
+    fi = GalacticOptim.instantiate_function(f, θ, adtype, nothing)
+    prob = GalacticOptim.OptimizationProblem(fi, θ; kwargs...)
+    return GalacticOptim.solve(prob, opt, args...; kwargs...)
 end
 
 

@@ -1,0 +1,35 @@
+# case
+matter = gas
+case = sod
+space = 1d1f1v
+nSpecies = 1
+flux = kfvs
+collision = bgk
+interpOrder = 2
+limiter = vanleer
+boundary = fix
+cfl = 0.5
+maxTime = 0.2
+
+# physical space
+x0 = 0
+x1 = 1
+nx = 100
+pMeshType = uniform
+nxg = 0
+
+# velocity space
+vMeshType = rectangle
+umin = -1
+umax = 1
+nu = 28
+nug = 0
+
+# gas
+knudsen = 0.0001
+mach = 0.0
+prandtl = 1
+inK = 0
+omega = 0.81
+alphaRef = 1.0
+omegaRef = 0.5
