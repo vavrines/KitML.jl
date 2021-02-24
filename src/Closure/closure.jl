@@ -41,6 +41,29 @@ function neural_closure(model::PyObject, X)
     return py"dnn"(model, X)
 end
 
+function train_neural_closure(model::PyObject, X, Y)
+    py"""
+    import tensorflow as tf
+
+    def trainModel(model, netX, netY):
+        '''
+        netX: input.shape = (batchsize,nMaxMoment), nMaxMoment = 4 in case of MK7
+        netY: output.shape = (batchsize,1)
+        Output: trained network model
+        '''
+        # predictions = model.predict(input)
+        print(netX.shape)
+        print(netY.shape)
+        model.fit(netX, netY, validation_split=0.0, epochs=20, batch_size=64, verbose=1)
+        model.save('newmodel.h5')
+
+        return model
+    """
+
+    return py"trainModel"(model, X,Y)
+end
+
+
 
 """
     create_neural_closure(imputDim, outputDim; acfun = relu)

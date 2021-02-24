@@ -10,15 +10,15 @@ begin
     x1 = 3.5
     y0 = -3.5
     y1 = 3.5
-    nx = 80#100
-    ny = 80#100
+    nx = 100
+    ny = 100
     dx = (x1 - x0) / nx
     dy = (y1 - y0) / ny
 
     pspace = KitBase.PSpace2D(x0, x1, nx, y0, y1, ny)
 
     # time
-    tEnd = 1.0
+    tEnd = 5.0
     cfl = 0.5
     dt = cfl / 2 * (dx * dy) / (dx + dy)
 
@@ -37,7 +37,7 @@ begin
     α = zeros(ne, nx, ny)
     #m = KitBase.eval_spherharmonic(points, L)
     #m = ComputeSphericalBasis(L,3,points)
-    m = ComputeSphericalBasisAnalytical(L,3,points)
+    m = ComputeSphericalBasisAnalytical(points)
 
     print(size(m))
 
@@ -102,16 +102,17 @@ global t = 0.0
 flux1 = zeros(ne, nx + 1, ny)
 flux2 = zeros(ne, nx, ny + 1)
 
-@showprogress for iter = 1:100
-    # regularization
+@showprogress for iter = 1:600
+    # closure of the system
+    # re-train using the optimizer
     @inbounds Threads.@threads for j = 1:ny
         for i = 1:nx
             res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
             α[:, i, j] .= res.minimizer
-            
             phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
         end
     end
+
     
     # flux
     fη1 = zeros(nq)

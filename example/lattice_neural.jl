@@ -64,7 +64,8 @@ begin
 
     # moments
     L = 1
-    ne = (L + 1)^2
+    #ne = (L + 1)^2
+    ne = GetBasisSize(L,3)
     phi = zeros(Float32, ne, nx, ny)
     phi[1, :, :] .= 1e-6
     α = zeros(Float32, ne, nx, ny)
