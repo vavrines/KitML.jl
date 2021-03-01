@@ -1,5 +1,4 @@
-using LinearAlgebra, Plots, JLD2
-using Flux, Flux.Zygote, Optim, DiffEqFlux
+using LinearAlgebra
 using KitBase, ProgressMeter
 import KitML
 
