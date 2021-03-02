@@ -84,7 +84,7 @@ flux2 = zeros(ne, nx, ny + 1)
 
 begin
 # mechanical solver
-anim = @animate for iter = 1:300
+anim = @animate for iter = 1:10
     println("iteration $(iter)")
 
     # regularization
@@ -166,4 +166,4 @@ anim = @animate for iter = 1:300
 end
 end
 cd(@__DIR__)
-gif(anim, "linesource_mn.gif")
+gif(anim, "periodic_mn.gif")

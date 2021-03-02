@@ -4,6 +4,11 @@ using KitBase, ProgressMeter
 import KitML
 include("math.jl")
 
+cd(@__DIR__)
+include("math.jl")
+model = KitML.load_model("best_model.h5"; mode = :tf)
+
+
 begin
     # space
     x0 = -3.5
@@ -30,17 +35,10 @@ begin
 
     # moments
     L = 1
-    #ne = (L + 1)^2
     ne = GetBasisSize(L,3)
-
-    phi = zeros(ne, nx, ny)
-    α = zeros(ne, nx, ny)
-    #m = KitBase.eval_spherharmonic(points, L)
-    #m = ComputeSphericalBasis(L,3,points)
-    m = ComputeSphericalBasisAnalytical(points)
-
-    print(size(m))
-
+    phi = zeros(Float32, ne, nx, ny)
+    α = zeros(Float32, ne, nx, ny)
+    m = ComputeSphericalBasisKarth(points,1,3)
 end
 
 function is_absorb(x::T, y::T) where {T<:Real}
@@ -82,7 +80,7 @@ begin
     σq = zeros(Float64, nx, ny)
     for i = 1:nx, j = 1:ny
         if -0.5<pspace.x[i, j]<0.5 && -0.5<pspace.y[i, j]<0.5
-            σq[i, j] = 1.0 / (4.0 * π)
+            σq[i, j] = 30.0 / (4.0 * π)
         else
             σq[i, j] = 0.0
         end
@@ -101,19 +99,26 @@ end
 global t = 0.0
 flux1 = zeros(ne, nx + 1, ny)
 flux2 = zeros(ne, nx, ny + 1)
+αT = zeros(Float32, nx*ny, ne)
+phiT = zeros(Float32, nx*ny, ne)
 
-@showprogress for iter = 1:600
-    # closure of the system
-    # re-train using the optimizer
+anim = @animate for iter = 1:100
+    println("Iteration $(iter)")
+
+    # neural closure of the system
+    @inbounds for i = 1:ne
+        phiT[:, i] .= phi[i, :, :][:]
+    end
+    αT .= KitML.neural_closure(model, phiT)
+    @inbounds for i = 1:ne
+        α[i, :, :] .= reshape(αT[:, i], nx, ny)
+    end
     @inbounds Threads.@threads for j = 1:ny
         for i = 1:nx
-            res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
-            α[:, i, j] .= res.minimizer
-            phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+            phi[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
         end
     end
-
-    
+ 
     # flux
     fη1 = zeros(nq)
     @inbounds for j = 1:ny
@@ -160,6 +165,9 @@ flux2 = zeros(ne, nx, ny + 1)
     end
 
     global t += dt
+    contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
 end
 
-contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
+cd(@__DIR__)
+gif(anim, "lattice_mn_pureneural.gif")
+#contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
