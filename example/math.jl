@@ -20,7 +20,10 @@ function ComputeSphericalBasisKarth(quadpts::Matrix{Float64}, polyDegree::Int64,
         for idx_quad in 1:(size(quadpts)[1])
             monomialBasis[:,idx_quad]= ComputeShpericalBasis1DPtKarth(quadpts[idx_quad,1],polyDegree)
         end
+    else
+        println("dimension 2 currently not supported")
     end
+
 
     return monomialBasis
 
