@@ -43,6 +43,7 @@ function save_model(nn; mode = :jld)
     if mode == :jld
         @save "model.jld2" nn
     elseif mode == :tf
-        tf.save("model.h5")
+        tf = pyimport("tensorflow")
+        nn.save("tfmodel.h5")
     end
 end

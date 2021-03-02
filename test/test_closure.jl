@@ -1,0 +1,5 @@
+m = KitML.create_neural_closure(10, 5; mode = :icnn)
+m = KitML.create_neural_closure(10, 5; mode = :dense)
+X = randn(10, 2)
+Y = randn(5, 2)
+KitML.neural_closure(m, rand(10))

@@ -5,6 +5,7 @@ KitML.dense_layer(4, 4; isBias = false)
 
 KitML.FastAffine(4, 4, tanh)
 
+nn = Chain(Dense(21, 21, tanh), Dense(21, 21))
 sm = KitML.Shortcut(nn)
 show(sm)
 sm(rand(21))
