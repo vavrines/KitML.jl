@@ -7,56 +7,35 @@ function computeEntropyH(α, m, ω,η::Function, η_prime_dual::Function)
 end
 
 #############################################
-function ComputeSphericalBasis(LMaxDegree,spatialDim,quadpts)
-    my = 0
-    phi = 0
-    monomialBasis = zeros(GetBasisSize(LMaxDegree,spatialDim),size(quadpts,1))
-    for idx_quad in 0:(size(quadpts)[1]-1)
-        ptsSphere = transformToSphere(quadpts[idx_quad+1,:])
 
-        my = ptsSphere[1]
-        phi = ptsSphere[2]
-        monomialBasis[:,idx_quad+1]  = ComputeShpericalBasis3DPt(my,phi,LMaxDegree)
-    end
 
-    return monomialBasis
-end
-
-function ComputeSphericalBasisAnalytical(quadpts::Matrix{Float64})
-    # Hardcoded solution for L = 1, spatialDim = 3
+function ComputeSphericalBasisKarth(quadpts::Matrix{Float64}, polyDegree::Int64, spatialDim::Int64)
+    monomialBasis = zeros(GetBasisSize(polyDegree,spatialDim),size(quadpts,1))
     
-    monomialBasis = zeros(4,size(quadpts,1))
-    for idx_quad in 0:(size(quadpts)[1]-1)
-        monomialBasis[1,idx_quad+1]  = 1
-        monomialBasis[2,idx_quad+1]  = quadpts[idx_quad+1,1] # x
-        monomialBasis[3,idx_quad+1]  = quadpts[idx_quad+1,2] # y
-        monomialBasis[4,idx_quad+1]  = quadpts[idx_quad+1,3] # z 
+    if spatialDim == 3
+        for idx_quad in 1:(size(quadpts)[1])
+            monomialBasis[:,idx_quad]  = ComputeShpericalBasis3DPtKarth(quadpts[idx_quad,1],quadpts[idx_quad,2],quadpts[idx_quad,3],polyDegree)
+        end
+    elseif spatialDim == 1
+        for idx_quad in 1:(size(quadpts)[1])
+            monomialBasis[:,idx_quad]= ComputeShpericalBasis1DPtKarth(quadpts[idx_quad,1],polyDegree)
+        end
     end
 
     return monomialBasis
+
 end
 
-function ComputeShpericalBasis3DPt(my, phi, LMaxDegree)
+function ComputeShpericalBasis3DPtKarth(pointX::Float64,pointY::Float64,pointZ::Float64,polyDegree::Int64)
+    idx_vector = 1
     spatialDim = 3
-    idx_vector = 0
-    omegaX = 0
-    omegaY = 0
-    omegaZ = 0
-    a = 0
-    b = 0
-    c = 0
-    basisLen = GetBasisSize(LMaxDegree,spatialDim)
+    basisLen = GetBasisSize(polyDegree,spatialDim)
     basisAtPt = ones(1,basisLen)
-
-    for idx_degree in 0:LMaxDegree
-        omegaX = Omega_x( my, phi )
-        omegaY = Omega_y( my, phi )
-        omegaZ = Omega_z( my ) 
-
+    for idx_degree in 0:polyDegree
         for a in 0:idx_degree
             for b in 0:(idx_degree-a)
                 c = idx_degree - a - b
-                basisAtPt[idx_vector+1] = Power(omegaX,a)*Power(omegaY,b)*Power(omegaZ,c)
+                basisAtPt[idx_vector] = Power(pointX,a)*Power(pointY,b)*Power(pointZ,c)
                 idx_vector = idx_vector+1
             end
         end
@@ -65,17 +44,44 @@ function ComputeShpericalBasis3DPt(my, phi, LMaxDegree)
     return basisAtPt
 end
 
-# Helper Functions
-function Omega_x( my, phi ) 
-    return sqrt( 1 - my * my ) * sin( phi )
+function ComputeShpericalBasis1DPtKarth(pointX::Float64,polyDegree::Int64)
+    idx_vector = 1
+    spatialDim = 1
+    basisLen = GetBasisSize(polyDegree,spatialDim)
+    basisAtPt = ones(1,basisLen)
+    for a in 0:polyDegree
+                basisAtPt[idx_vector] = Power(pointX,a)
+                idx_vector = idx_vector+1
+    end
+    
+    return basisAtPt
 end
 
-function Omega_y( my, phi ) 
-    return sqrt( 1 - my * my ) * cos( phi )
-end
+function ComputeSphericalBasisAnalytical(quadpts::Matrix{Float64})
+    # Hardcoded solution for L = 2, spatialDim = 3
+    
+    #monomialBasis = zeros(10,size(quadpts,1))
+    #for idx_quad in 1:(size(quadpts)[1])
+    #    monomialBasis[1,idx_quad]  = 1
+    #    monomialBasis[2,idx_quad]  = quadpts[idx_quad,3] # z
+    #    monomialBasis[3,idx_quad]  = quadpts[idx_quad,2] # y
+    #    monomialBasis[4,idx_quad]  = quadpts[idx_quad,1] # x 
+    #    monomialBasis[5,idx_quad]  = quadpts[idx_quad,3] * quadpts[idx_quad,3] # z*z
+    #    monomialBasis[6,idx_quad]  = quadpts[idx_quad,2] * quadpts[idx_quad,3] # y*z
+    #    monomialBasis[7,idx_quad]  = quadpts[idx_quad,2] * quadpts[idx_quad,2] # y*y 
+    #    monomialBasis[8,idx_quad]  = quadpts[idx_quad,1] * quadpts[idx_quad,3] # x*z 
+    #    monomialBasis[9,idx_quad]  = quadpts[idx_quad,1] * quadpts[idx_quad,2] # x*y 
+    #    monomialBasis[10,idx_quad] = quadpts[idx_quad,1] * quadpts[idx_quad,1] # x*x
+    #end
 
-function Omega_z( my ) 
-    return my
+    monomialBasis = zeros(3,size(quadpts,1))
+    for idx_quad in 1:(size(quadpts)[1])
+        monomialBasis[1,idx_quad]  = 1
+        monomialBasis[2,idx_quad]  = quadpts[idx_quad,1] # z
+        monomialBasis[3,idx_quad]  = quadpts[idx_quad,1] * quadpts[idx_quad,1] # z*z
+    end
+
+    return monomialBasis
 end
 
 function Power(  basis,  exponent ) 
@@ -83,7 +89,7 @@ function Power(  basis,  exponent )
         return 1.0
     end
     result = basis;
-    for i in 1:exponent
+    for i in 2:exponent
         result = result * basis
     end
     return result
@@ -99,15 +105,4 @@ end
 
 function GetCurrDegreeSize(currDegree, spatialDim)
     return factorial(currDegree + spatialDim -1)/(factorial(currDegree)*factorial(spatialDim-1 ))
-end
-
-function transformToSphere(pointsKarthesian)
-    my = pointsKarthesian[3]
-    phi = 0
-    if (pointsKarthesian[2]>0)
-        phi = acos(pointsKarthesian[1])
-    else
-        phi = 2*π-acos(pointsKarthesian[1])
-    end    
-    return [my,phi]
 end
