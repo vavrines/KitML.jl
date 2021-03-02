@@ -1,6 +1,9 @@
 using Test, Flux, DiffEqFlux
 import KitML
 
+include("test_io.jl")
+include("test_layer.jl")
+
 begin
     u = collect(-5:0.5:5)
     ω = ones(21) ./ 21
@@ -14,36 +17,6 @@ begin
     nn1 = FastChain(FastDense(21, 21, tanh), FastDense(21, 21))
     p1 = initial_params(nn1)
 end
-
-# IO
-cd(@__DIR__)
-KitML.load_data("dataset.csv", dlm = ",")
-KitML.save_model(nn)
-
-# Layer
-Chain(4, 4, tanh)
-KitML.dense_layer(4, 4; isBias = true)
-KitML.dense_layer(4, 4; isBias = false)
-
-KitML.FastAffine(4, 4, tanh)
-
-sm = KitML.Shortcut(nn)
-show(sm)
-sm(rand(21))
-
-icnnl = KitML.ICNNLayer(4, 4, 1, identity; fw = randn, fb = zeros, precision = Float32)
-icnnc =
-    KitML.ICNNChain(4, 1, [10, 10], identity; fw = randn, fb = zeros, precision = Float32)
-show(icnnl)
-show(icnnc)
-icnnl(randn(4))
-icnnl(randn(4), randn(4))
-icnnc(randn(4))
-
-fil = KitML.FastIC(4, 4, 4)
-fic = KitML.FastICNN(4, 1, [10, 10])
-fil(rand(4), rand(4), initial_params(fil))
-fic(rand(4), initial_params(fic))
 
 # Train
 X = randn(21, 10)

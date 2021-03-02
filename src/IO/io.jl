@@ -42,5 +42,7 @@ Save the trained machine learning model
 function save_model(nn; mode = :jld)
     if mode == :jld
         @save "model.jld2" nn
+    elseif mode == :tf
+        tf.save("model.h5")
     end
 end
