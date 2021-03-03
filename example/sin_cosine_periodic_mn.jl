@@ -41,7 +41,7 @@ begin
 
     # time
     tEnd = 1.0
-    cfl = 0.5
+    cfl = 0.8
     dt = cfl / 2 * (dx * dy) / (dx + dy)
 
     # quadrature
@@ -67,13 +67,16 @@ end
 begin
     s2 = 0.03^2
     flr = 1e-4
-    init_field(x, y) = sqrt(π)*(2+cos(2*π*x)*cos(2*π*y))
+    init_field(x, y) = (1.5+cos(2*π*x)*cos(2*π*y))
     for j = 1:nx
         for i = 1:ny
             y = y0 + (i - 0.5) * dy
             x = x0 + (j - 0.5) * dx
             # only zeroth order moment is non-zero
             phi[1, i, j] = init_field(x, y)
+            phi[2, i, j] = 0.9/3.0 * phi[1, i, j]
+            phi[3, i, j] = 0.9/3.0 * phi[1, i, j]
+            phi[4, i, j] = 0.9/3.0 * phi[1, i, j]
         end
     end
 end
@@ -84,7 +87,7 @@ flux2 = zeros(ne, nx, ny + 1)
 
 begin
 # mechanical solver
-anim = @animate for iter = 1:10
+anim = @animate for iter = 1:3000
     println("iteration $(iter)")
 
     # regularization
@@ -162,7 +165,7 @@ anim = @animate for iter = 1:10
     end
 
     global t += dt
-    contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
+    contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :], clims=(0, 3))
 end
 end
 cd(@__DIR__)

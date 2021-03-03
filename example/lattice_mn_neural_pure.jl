@@ -102,7 +102,7 @@ flux2 = zeros(ne, nx, ny + 1)
 αT = zeros(Float32, nx*ny, ne)
 phiT = zeros(Float32, nx*ny, ne)
 
-anim = @animate for iter = 1:1000
+anim = @animate for iter = 1:100
     println("Iteration $(iter)")
 
     # neural closure of the system
@@ -151,7 +151,7 @@ anim = @animate for iter = 1:1000
                     (flux1[q, i, j] - flux1[q, i+1, j]) / dx +
                     (flux2[q, i, j] - flux2[q, i, j+1]) / dy +
                     (σs[i, j] * phi[q, i, j] - σt[i, j] * phi[q, i, j]) * dt +
-                    σq[i, j] * dt * 100.0
+                    σq[i, j] * dt * 100
             end
 
             for q = 2:ne
