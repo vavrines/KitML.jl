@@ -10,8 +10,8 @@ begin
     x1 = 3.5
     y0 = -3.5
     y1 = 3.5
-    nx = 100
-    ny = 100
+    nx = 50
+    ny = 50
     dx = (x1 - x0) / nx
     dy = (y1 - y0) / ny
 
@@ -19,7 +19,7 @@ begin
 
     # time
     tEnd = 5.0
-    cfl = 0.5
+    cfl = 0.8
     dt = cfl / 2 * (dx * dy) / (dx + dy)
 
     # quadrature

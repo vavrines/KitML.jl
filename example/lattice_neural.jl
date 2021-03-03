@@ -70,7 +70,7 @@ begin
     phi[1, :, :] .= 1e-6
     α = zeros(Float32, ne, nx, ny)
     #m = KitBase.eval_spherharmonic(points, L)
-    m = ComputeSphericalBasisAnalytical(L, 3, points)
+    m = ComputeSphericalBasisAnalytical( points)
 end
 
 begin
@@ -137,7 +137,9 @@ plot!(pspace.x[1:nx, 1], α1[1, :, 40], label="NN")
 
 phi_temp = zero(phi)
 phi_old = zero(phi)
-@showprogress for iter = 1:10#20
+anim = @animate for iter = 1:1000#20
+    println("Iteration $(iter)")
+
     phi_old .= phi
 
     # regularization
@@ -156,7 +158,7 @@ phi_old = zero(phi)
 
     @inbounds for j = 1:ny
         for i = 1:nx
-            #@show norm(phi_temp[:, i, j] - phi_old[:, i, j], 2)
+            @show norm(phi_temp[:, i, j] - phi_old[:, i, j], 2)
 
             if norm(phi_temp[:, i, j] - phi_old[:, i, j], 2) > 1e-1
                 res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
@@ -164,7 +166,7 @@ phi_old = zero(phi)
                 phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
 
                 if phi[1, i, j] > 0.01
-                    X = vcat(X, permutedims(α[:, i, j]))
+                    X = vcat(X, permutedims(phi[:, i, j]))
                     Y = vcat(Y, kinetic_entropy(α[:, i, j], m, weights))
                 end
             else
@@ -219,6 +221,7 @@ phi_old = zero(phi)
     end
 
     global t += dt
+    contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
 
     if iter%9 == 0
         model.fit(X, Y, epochs=2)
@@ -231,4 +234,7 @@ phi_old = zero(phi)
     end
 end
 
-contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
+cd(@__DIR__)
+gif(anim, "lattice_neural.gif")
+
+#contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])

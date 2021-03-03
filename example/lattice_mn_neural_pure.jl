@@ -24,7 +24,7 @@ begin
 
     # time
     tEnd = 5.0
-    cfl = 0.5
+    cfl = 0.7
     dt = cfl / 2 * (dx * dy) / (dx + dy)
 
     # quadrature
@@ -80,7 +80,7 @@ begin
     σq = zeros(Float64, nx, ny)
     for i = 1:nx, j = 1:ny
         if -0.5<pspace.x[i, j]<0.5 && -0.5<pspace.y[i, j]<0.5
-            σq[i, j] = 30.0 / (4.0 * π)
+            σq[i, j] = 1.0 / (4.0 * π)
         else
             σq[i, j] = 0.0
         end
@@ -102,7 +102,7 @@ flux2 = zeros(ne, nx, ny + 1)
 αT = zeros(Float32, nx*ny, ne)
 phiT = zeros(Float32, nx*ny, ne)
 
-anim = @animate for iter = 1:100
+anim = @animate for iter = 1:1000
     println("Iteration $(iter)")
 
     # neural closure of the system
@@ -151,7 +151,7 @@ anim = @animate for iter = 1:100
                     (flux1[q, i, j] - flux1[q, i+1, j]) / dx +
                     (flux2[q, i, j] - flux2[q, i, j+1]) / dy +
                     (σs[i, j] * phi[q, i, j] - σt[i, j] * phi[q, i, j]) * dt +
-                    σq[i, j] * dt
+                    σq[i, j] * dt * 100.0
             end
 
             for q = 2:ne
@@ -169,5 +169,5 @@ anim = @animate for iter = 1:100
 end
 
 cd(@__DIR__)
-gif(anim, "lattice_mn_pureneural.gif")
+gif(anim, "lattice_mn_pure_neural.gif")
 #contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
