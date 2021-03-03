@@ -1,6 +1,8 @@
+
+using KitBase
 using LinearAlgebra, Plots, JLD2
-using Flux, Flux.Zygote, Optim, DiffEqFlux
-using KitBase, ProgressMeter, CSV,DataFrames
+using Optim, DiffEqFlux
+using CSV,DataFrames
 import KitML
 cd(@__DIR__)
 include("math.jl")
