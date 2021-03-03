@@ -63,7 +63,7 @@ phiT = zeros(nx*ny, ne)
 
 
 #metaIter = 2
-for metaIter in 1:50
+for metaIter in 1:500
 # csv logging
 df = DataFrame(Iter = Int64[], RelErrCells = Float64[])
 
@@ -87,7 +87,7 @@ println("metaIteration $(metaIter)")
 
 # mechanical solver
 
-for iter in 1:300
+for iter in 1:200
     println("iteration $(iter) , meta-iter $(metaIter)")
 
     #restructuring of the matrix
