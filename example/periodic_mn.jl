@@ -1,6 +1,6 @@
 using LinearAlgebra, Plots, JLD2
 using Flux, Flux.Zygote, Optim, DiffEqFlux
-using KitBase, ProgressMeter
+using KitBase
 import KitML
 
 # one-cell simplification
@@ -41,7 +41,7 @@ begin
 
     # time
     tEnd = 1.0
-    cfl = 0.8
+    cfl = 0.9
     dt = cfl / 2 * (dx * dy) / (dx + dy)
 
     # quadrature
@@ -87,7 +87,7 @@ flux2 = zeros(ne, nx, ny + 1)
 
 begin
 # mechanical solver
-anim = @animate for iter = 1:3000
+anim = @animate for iter = 1:500
     println("iteration $(iter)")
 
     # regularization

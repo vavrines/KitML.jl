@@ -1,6 +1,8 @@
+
+using KitBase
 using LinearAlgebra, Plots, JLD2
-using Flux, Flux.Zygote, Optim, DiffEqFlux
-using KitBase, ProgressMeter, CSV,DataFrames
+using Optim, DiffEqFlux
+using CSV,DataFrames
 import KitML
 cd(@__DIR__)
 include("math.jl")
@@ -27,7 +29,7 @@ begin
 
     # time
     tEnd = 1.0
-    cfl = 0.7
+    cfl = 0.8
     dt = cfl / 2 * (dx * dy) / (dx + dy)
 
     # quadrature
@@ -61,7 +63,7 @@ phiT = zeros(nx*ny, ne)
 
 
 #metaIter = 2
-for metaIter in 1:50
+for metaIter in 1:500
 # csv logging
 df = DataFrame(Iter = Int64[], RelErrCells = Float64[])
 
@@ -85,7 +87,7 @@ println("metaIteration $(metaIter)")
 
 # mechanical solver
 
-for iter in 1:400
+for iter in 1:200
     println("iteration $(iter) , meta-iter $(metaIter)")
 
     #restructuring of the matrix
@@ -112,11 +114,11 @@ for iter in 1:400
         for i = 1:nx
             phi[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
             # Check the prediction error
-            error = norm( phi[:, i, j]-phi_old[:, i, j],2)^2 # take care of the criterion
+            error = norm( (phi[:, i, j]-phi_old[:, i, j] )/phi_old[:, i, j] ,2)^2 # take care of the criterion
             #if error > maxError
             #    maxError = error
             #println(error)
-            if error > 1e-5 || phi[:, i, j] == NaN
+            if error > 1e-4 || phi[:, i, j] == NaN
                 #println(error)
                 errorsFound = true
                 #add point to retraining batch. compute alpha and h w.r.t phi_old
