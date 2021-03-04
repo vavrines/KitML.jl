@@ -58,11 +58,11 @@ function sci_train(
     return GalacticOptim.solve(prob, opt, args...; cb = Flux.throttle(cb, 1), maxiters = maxiters, kwargs...)
 end
 
-function sci_train(loss::Function, θ, opt, adtype = GalacticOptim.AutoZygote(), args...; kwargs...)
+function sci_train(loss::Function, θ, opt = ADAM(), adtype = GalacticOptim.AutoZygote(), args...; maxiters = 200::Integer, kwargs...)
     f = GalacticOptim.OptimizationFunction((x, p) -> loss(x), adtype)
     fi = GalacticOptim.instantiate_function(f, θ, adtype, nothing)
     prob = GalacticOptim.OptimizationProblem(fi, θ; kwargs...)
-    return GalacticOptim.solve(prob, opt, args...; kwargs...)
+    return GalacticOptim.solve(prob, opt, args...; maxiters = maxiters, kwargs...)
 end
 
 
