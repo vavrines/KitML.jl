@@ -3,7 +3,9 @@ Chain(4, 4, tanh)
 KitML.dense_layer(4, 4; isBias = true)
 KitML.dense_layer(4, 4; isBias = false)
 
-KitML.FastAffine(4, 4, tanh)
+faf = KitML.FastAffine(4, 4, tanh)
+DiffEqFlux.paramlength(faf)
+DiffEqFlux.initial_params(faf)
 
 nn = Chain(Dense(21, 21, tanh), Dense(21, 21))
 sm = KitML.Shortcut(nn)
