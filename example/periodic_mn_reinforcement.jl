@@ -73,7 +73,7 @@ phiT = zeros(nx*ny, ne)
 #metaIter = 2
 for metaIter in 1:500
 # csv logging
-df = DataFrame(Iter = Int64[], RelErrCells = Float64[], MaxRelError = Float64[])
+df = DataFrame(Iter = Int64[], RelErrCells = Float64[], MaxRelror = Float64[])
 
 # initial distribution
 begin
