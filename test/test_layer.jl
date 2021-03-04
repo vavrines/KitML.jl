@@ -5,7 +5,8 @@ KitML.dense_layer(4, 4; isBias = false)
 
 faf = KitML.FastAffine(4, 4, tanh)
 DiffEqFlux.paramlength(faf)
-DiffEqFlux.initial_params(faf)
+_p = DiffEqFlux.initial_params(faf)
+faf(randn(Float32, 4), _p)
 
 nn = Chain(Dense(21, 21, tanh), Dense(21, 21))
 sm = KitML.Shortcut(nn)
