@@ -10,8 +10,9 @@ using KitBase
 using KitBase.JLD2
 using KitBase.PyCall
 using Flux
+using Flux.Zygote
 using DiffEqFlux
-using GalacticOptim
+using DiffEqFlux.GalacticOptim
 using OrdinaryDiffEq
 using CSV
 using DataFrames

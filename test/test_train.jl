@@ -10,3 +10,7 @@ KitML.sci_train(nn1, (X, Y))
 loss(p) = nn1(X, p) |> sum
 p1 = initial_params(nn1)
 KitML.sci_train(loss, p1)
+
+cd(@__DIR__)
+model = KitML.load_model("tfmodel.h5"; mode = :tf)
+KitML.sci_train!(model, (randn(Float32, 1, 4), randn(Float32, 1, 1)))
