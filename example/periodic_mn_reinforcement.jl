@@ -3,11 +3,19 @@ using KitBase
 using LinearAlgebra, Plots, JLD2
 using Optim, DiffEqFlux
 using CSV,DataFrames
+using PyCall
+
 import KitML
 cd(@__DIR__)
 include("math.jl")
 
 # model initialization
+# Force CPU Learning
+py"""
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+"""
+
 model = KitML.load_model("best_model.h5"; mode = :tf)
 
 begin
@@ -20,8 +28,8 @@ begin
     x1 = 1.5
     y0 = -1.5
     y1 = 1.5
-    nx = 50#100
-    ny = 50#100
+    nx = 100#100
+    ny = 100#100
     dx = (x1 - x0) / nx
     dy = (y1 - y0) / ny
 
@@ -65,7 +73,7 @@ phiT = zeros(nx*ny, ne)
 #metaIter = 2
 for metaIter in 1:500
 # csv logging
-df = DataFrame(Iter = Int64[], RelErrCells = Float64[])
+df = DataFrame(Iter = Int64[], RelErrCells = Float64[], MaxRelError = Float64[])
 
 # initial distribution
 begin
@@ -108,42 +116,49 @@ for iter in 1:200
     #####
 
     # realizability reconstruction
-    error = 0
-    maxError = 0
-    @inbounds Threads.@threads for j = 1:ny
+    error = 0.0
+    count = 0
+    maxError = 0.0
+    @inbounds for j = 1:ny
         for i = 1:nx
             phi[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
             # Check the prediction error
             error = norm( (phi[:, i, j]-phi_old[:, i, j] )/phi_old[:, i, j] ,2)^2 # take care of the criterion
-            #if error > maxError
-            #    maxError = error
+            if error > maxError
+                maxError = error
+            end
             #println(error)
-            if error > 1e-4 || phi[:, i, j] == NaN
+            if error > 5e-4 || phi[:, i, j] == NaN
                 #println(error)
                 errorsFound = true
+                count = count +1
+            end            
+        end
+    end
+
+    println("Max error: $(maxError)")
+    #retrain network on cells with too much error, if there is any
+    if errorsFound
+        for j = 1:ny
+            for i = 1:nx
                 #add point to retraining batch. compute alpha and h w.r.t phi_old
                 res = KitBase.optimize_closure(α[:, i, j], m, weights, phi_old[:, i, j], KitBase.maxwell_boltzmann_dual)
                 α[:, i, j] .= res.minimizer
                 phi[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
-                
+
                 #Setup trianing data
                 h = computeEntropyH(α[:, i, j], m, weights,maxwell_boltzmann_primal, KitBase.maxwell_boltzmann_dual_prime)
-
                 h_train =vcat(h_train, h)
                 phi_train =vcat(phi_train, phi[:, i, j])
             end
-
         end
-    end
 
-    #println("Max error: $(maxError)")
-    #retrain network on cells with too much error, if there is any
-    if errorsFound
         print("Current amount of  errorous datapoints: ")
         print(size(h_train)[1]/(nx*ny)*100)
         print(" % ")
         print(" in iter ")
         println(iter)
+
         # Transform into matrix format
         phiTrainMat = zeros(size(h_train)[1],4)
         hTrainMat = zeros(size(h_train)[1],1)
@@ -154,14 +169,17 @@ for iter in 1:200
             phiTrainMat[i,4] = phi_train[4*(i-1)+4]
             hTrainMat[i,1]= h_train[i]
         end
-        model.fit(phiTrainMat,hTrainMat,epochs =200,batch_size = 32,validation_split=0.0,verbose= 0)
+
+        print(size(h_train))
+        model.fit(phiTrainMat,hTrainMat,epochs =200,batch_size = 32,validation_split=0.0,verbose= 1)
         println("model retrained")
-        model.save("best_model.h5")
-        
-        push!(df,[iter , size(h_train)[1]/(nx*ny)*100])
-    else 
-        push!(df,[iter , size(h_train)[1]/(nx*ny)*100])
+        model.save("best_model.h5") 
+    else
+        println("Error smaller than 5e-4")
     end
+    
+    push!(df,[iter , count/(nx*ny)*100, maxError])
+    
     # flux
     fη1 = zeros(nq)
     @inbounds for j = 1:ny
@@ -229,6 +247,7 @@ for iter in 1:200
     global t += dt
     #contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :], clims=(0.5, 2.5))
 end
+
     CSV.write("Hist_metaIter_$(metaIter).csv",df)
 end
 
