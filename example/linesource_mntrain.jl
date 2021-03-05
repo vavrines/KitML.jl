@@ -10,7 +10,7 @@ baseDimension = 4 #length of u
 for name in names(dataset)
     println(":", name, ", ")
 end
- 
+
 
 L = size(dataset, 1)
 
@@ -19,14 +19,14 @@ begin
     X = zeros(baseDimension, size(dataset, 1))
     Y = zeros(1, size(dataset, 1))
     for j in axes(X, 2)
-        X[1, j] = dataset.u_0[j];;
+        X[1, j] = dataset.u_0[j]
         X[2, j] = dataset.u_1[j]
         X[3, j] = dataset.u_2[j]
         X[4, j] = dataset.u_3[j]
         Y[1, j] = dataset.h[j]
     end
-    data = Flux.Data.DataLoader(X, Y, batchsize = 256, shuffle=true)
-    
+    data = Flux.Data.DataLoader(X, Y, batchsize = 256, shuffle = true)
+
     #Base.show(nn)
     #nn = Chain(
     #    Dense(4, 16, relu),

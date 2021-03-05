@@ -60,19 +60,36 @@ flux2 = zeros(ne, nx, ny + 1)
     # regularization
     Threads.@threads for j = 1:ny
         for i = 1:nx
-            res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
+            res = KitBase.optimize_closure(
+                α[:, i, j],
+                m,
+                weights,
+                phi[:, i, j],
+                KitBase.maxwell_boltzmann_dual,
+            )
             α[:, i, j] .= res.minimizer
-            
-            phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+
+            phi[:, i, j] .= KitBase.realizable_reconstruct(
+                res.minimizer,
+                m,
+                weights,
+                KitBase.maxwell_boltzmann_dual_prime,
+            )
         end
     end
-    
+
     # flux
     fη1 = zeros(nq)
     for j = 1:ny
         for i = 2:nx
-            KitBase.flux_kfvs!(fη1, KitBase.maxwell_boltzmann_dual.(α[:, i-1, j]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 1], dt)
-            
+            KitBase.flux_kfvs!(
+                fη1,
+                KitBase.maxwell_boltzmann_dual.(α[:, i-1, j]' * m)[:],
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:],
+                points[:, 1],
+                dt,
+            )
+
             for k in axes(flux1, 1)
                 flux1[k, i, j] = sum(m[k, :] .* weights .* fη1)
             end
@@ -82,14 +99,20 @@ flux2 = zeros(ne, nx, ny + 1)
     fη2 = zeros(nq)
     for i = 1:nx
         for j = 2:ny
-            KitBase.flux_kfvs!(fη2, KitBase.maxwell_boltzmann_dual.(α[:, i, j-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 2], dt)
-            
+            KitBase.flux_kfvs!(
+                fη2,
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j-1]' * m)[:],
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:],
+                points[:, 2],
+                dt,
+            )
+
             for k in axes(flux2, 1)
                 flux2[k, i, j] = sum(m[k, :] .* (weights .* fη2))
             end
         end
     end
-    
+
     # update
     for j = 2:ny-1
         for i = 2:nx-1
@@ -98,7 +121,7 @@ flux2 = zeros(ne, nx, ny + 1)
                     phi[q, i, j] +
                     (flux1[q, i, j] - flux1[q, i+1, j]) / dx +
                     (flux2[q, i, j] - flux2[q, i, j+1]) / dy #+
-                    #(integral - phi[q, i, j]) * dt
+                #(integral - phi[q, i, j]) * dt
             end
         end
     end
@@ -110,10 +133,21 @@ X = zeros(Float32, 4, nx * ny)
 Y = zeros(Float32, 4, nx * ny)
 for j = 1:ny
     for i = 1:nx
-        res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
+        res = KitBase.optimize_closure(
+            α[:, i, j],
+            m,
+            weights,
+            phi[:, i, j],
+            KitBase.maxwell_boltzmann_dual,
+        )
         α[:, i, j] .= res.minimizer
-        phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
-    
+        phi[:, i, j] .= KitBase.realizable_reconstruct(
+            res.minimizer,
+            m,
+            weights,
+            KitBase.maxwell_boltzmann_dual_prime,
+        )
+
         X[:, (j-1)*nx+i] .= phi[:, i, j]
         Y[:, (j-1)*nx+i] .= α[:, i, j]
     end
@@ -121,12 +155,16 @@ end
 
 using Flux
 #data = [(X, Y)]
-data = Flux.Data.DataLoader(X, Y, batchsize=1, shuffle=true)
+data = Flux.Data.DataLoader(X, Y, batchsize = 1, shuffle = true)
 
 
 using Flux: @epochs
 ```nn = Chain(Dense(4, 16, tanh), Dense(16, 16, tanh), Dense(16, 16, tanh), Dense(16, 16, tanh), Dense(16, 4))```
-nn = Chain(Dense(4, 16, relu), SkipConnection(Chain(Dense(16, 16, relu), Dense(16, 16, relu)), +), Dense(16, 4, relu))
+nn = Chain(
+    Dense(4, 16, relu),
+    SkipConnection(Chain(Dense(16, 16, relu), Dense(16, 16, relu)), +),
+    Dense(16, 4, relu),
+)
 ps = params(nn)
 
 function loss(x, y)
@@ -142,7 +180,11 @@ end
 Flux.@functor Shortcut
 (m::Shortcut)(x) = m.σ.(m.f(x) .+ x)
 
-nn = Chain(Dense(4, 16, tanh), Shortcut(Chain(Dense(16, 16, relu), Dense(16, 16, relu)), tanh), Dense(16, 4, tanh))
+nn = Chain(
+    Dense(4, 16, tanh),
+    Shortcut(Chain(Dense(16, 16, relu), Dense(16, 16, relu)), tanh),
+    Dense(16, 4, tanh),
+)
 ps = params(nn)
 
 
@@ -152,7 +194,12 @@ ps = params(nn)
 
 
 using DiffEqFlux
-ann = FastChain(FastDense(4, 16, tanh), FastDense(16, 16, tanh), FastDense(16, 16, tanh), FastDense(16, 4))
+ann = FastChain(
+    FastDense(4, 16, tanh),
+    FastDense(16, 16, tanh),
+    FastDense(16, 16, tanh),
+    FastDense(16, 4),
+)
 p = initial_params(ann)
 function loss2(θ)
     sum(abs2, ann(X, θ) - Y)
@@ -163,7 +210,13 @@ callback = function (p, l)
 end
 
 res = DiffEqFlux.sciml_train(loss2, p, ADAM(), cb = callback, maxiters = 200)
-res = DiffEqFlux.sciml_train(loss2, res.minimizer, ADAM(), cb = Flux.throttle(callback, 1), maxiters = 5000)
+res = DiffEqFlux.sciml_train(
+    loss2,
+    res.minimizer,
+    ADAM(),
+    cb = Flux.throttle(callback, 1),
+    maxiters = 5000,
+)
 
 p, re = Flux.destructure(nn)
 function loss3(θ)
