@@ -71,10 +71,10 @@ begin
     
     global X = zeros(Float32, ne, 1)
     X[:, 1] .= phi[:, 1]
-    #global Y = zeros(Float32, 1, 1) # h
-    #Y[1, 1] = kinetic_entropy(opt.minimizer, m, weights)
-    global Y = zeros(Float32, ne, 1) # α
-    Y[:, 1] = opt.minimizer
+    global Y = zeros(Float32, 1, 1) # h
+    Y[1, 1] = kinetic_entropy(opt.minimizer, m, weights)
+    #global Y = zeros(Float32, ne, 1) # α
+    #Y[:, 1] = opt.minimizer
 end
 
 begin
@@ -142,21 +142,25 @@ end
 
 for i = 1:nx
     X = hcat(X, phi[:, i])
-    #Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
-    Y = hcat(Y, α[:, i])
+    Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
+    #Y = hcat(Y, α[:, i])
 end
 
 X_old = deepcopy(X)
 Y_old = deepcopy(Y)
 
-fnn = FastChain(FastDense(2, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 2))
+fnn = FastChain(FastDense(2, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 1))
 res = KitML.sci_train(fnn, (X, Y); maxiters = 2000)
 res = KitML.sci_train(fnn, (X, Y), res.u, LBFGS(); maxiters=1000)
 #=
 p = initial_params(fnn)
 function loss(p)
     #norm(KitML.neural_closure(fnn, p, X) .- Y, 2)
-    norm(fnn(X, p) .- Y, 2)
+    l = 0.0
+    for i in axes(X, 2)
+        l += sum(fnn(X[:, i], p) .- Y[1, i])
+    end
+    return l /= size(X, 2)
 end
 cb = function (p, l)
     println("loss: $(loss(p))")
@@ -172,8 +176,8 @@ res = KitML.sci_train(loss, res.u, ADAM(); maxiters=4000, cb=cb)
 #tmodel.predict(permutedims(phi[:, 1]))
 #KitML.neural_closure(tmodel, permutedims(phi[:, 1]))
 
-#X = deepcopy(X_old)
-#Y = deepcopy(Y_old)
+X = deepcopy(X_old)
+Y = deepcopy(Y_old)
 begin
     # initial condition
     f0 = 0.0001 * ones(nu)
@@ -193,14 +197,18 @@ anim = @animate for iter = 1:nt
 
     # regularization
     #α .= KitML.neural_closure(fnn, res.u, phi_old)
-    α .= fnn(phi_old, res.u)
+    for i = 1:nx
+        α[:, i] .= KitML.neural_closure(fnn, res.u, phi_old[:, i])
+    end
+
+    #α .= fnn(phi_old, res.u)
     @inbounds Threads.@threads for i = 1:nx
         phi_temp[:, i] .= KitBase.realizable_reconstruct(α[:, i], m, weights, KitBase.maxwell_boltzmann_dual_prime)
     end
 
     counter = 0
     @inbounds for i = 1:nx
-        if norm(phi_temp[:, i] .- phi_old[:, i], 1) / phi_old[1, i] > 2e-3
+        if norm(phi_temp[:, i] .- phi_old[:, i], 1) / phi_old[1, i] > 1e-2#2e-3
             counter +=1
 
             opt = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
@@ -208,8 +216,8 @@ anim = @animate for iter = 1:nt
             phi[:, i] .= KitBase.realizable_reconstruct(opt.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
 
             X = hcat(X, phi[:, i])
-            #Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
-            Y = hcat(Y, α[:, i])
+            Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
+            #Y = hcat(Y, α[:, i])
         else
             phi[:, i] .= phi_temp[:, i]
         end
@@ -250,7 +258,7 @@ anim = @animate for iter = 1:nt
     global t += dt
 
     if iter%9 == 0
-        res = KitML.sci_train(fnn, (X, Y), res.u, ADAM(); maxiters=200)
+        #res = KitML.sci_train(fnn, (X, Y), res.u, ADAM(); maxiters=200)
         res = KitML.sci_train(fnn, (X, Y), res.u, LBFGS(); maxiters=400)
         #=
         X = zeros(Float32, ne, 1)
