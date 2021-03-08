@@ -71,7 +71,7 @@ phiT = zeros(nx*ny, ne)
 
 
 #metaIter = 2
-for metaIter in 1:500
+for metaIter in 11:500
 # csv logging
 df = DataFrame(Iter = Int64[], RelErrCells = Float64[], MaxRelror = Float64[])
 
@@ -95,7 +95,7 @@ println("metaIteration $(metaIter)")
 
 # mechanical solver
 
-for iter in 1:200
+for iter in 1:100
     println("iteration $(iter) , meta-iter $(metaIter)")
 
     #restructuring of the matrix
@@ -175,7 +175,7 @@ for iter in 1:200
         println("model retrained")
         model.save("best_model.h5") 
     else
-        println("Error smaller than 5e-4")
+        println("Error smaller than 5e-5")
     end
     
     push!(df,[iter , count/(nx*ny)*100, maxError])
@@ -247,10 +247,10 @@ for iter in 1:200
     global t += dt
     #contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :], clims=(0.5, 2.5))
 end
-
-    CSV.write("Hist_metaIter_$(metaIter).csv",df)
+global t = 0
+CSV.write("Hist_metaIter_$(metaIter).csv",df)
 end
 
-#contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
+##contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
 #cd(@__DIR__)
 #gif(anim, "periodic_reinforcment_$(metaIter).gif")

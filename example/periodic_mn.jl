@@ -32,8 +32,8 @@ begin
     x1 = 1.5
     y0 = -1.5
     y1 = 1.5
-    nx = 60#100
-    ny = 60#100
+    nx = 100
+    ny = 100
     dx = (x1 - x0) / nx
     dy = (y1 - y0) / ny
 
@@ -41,7 +41,7 @@ begin
 
     # time
     tEnd = 1.0
-    cfl = 0.9
+    cfl = 0.8
     dt = cfl / 2 * (dx * dy) / (dx + dy)
 
     # quadrature
@@ -87,7 +87,7 @@ flux2 = zeros(ne, nx, ny + 1)
 
 begin
 # mechanical solver
-anim = @animate for iter = 1:500
+anim = @animate for iter = 1:200
     println("iteration $(iter)")
 
     # regularization
