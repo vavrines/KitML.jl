@@ -112,9 +112,9 @@ end
 # ------------------------------------------------------------
 # TensorFlow
 # ------------------------------------------------------------
-function sci_train!(ann::PyObject, data::Tuple; device = cpu, epoch = 1)
+function sci_train!(ann::PyObject, data::Tuple; device = cpu, split = 0.0, epoch = 1, batch = 64, verbose = 1)
     X, Y = data
-    ann.fit(X, Y, epochs = epoch)
+    ann.fit(X, Y, validation_split=split, epochs=epoch, batch_size=batch, verbose=verbose)
 
     return nothing
 end
