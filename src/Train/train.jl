@@ -82,7 +82,7 @@ Scientific machine learning training function
 function sci_train!(ann, data::Tuple, opt = ADAM(); device = cpu, epoch = 1, batch = 1)
     X, Y = data |> device
     L = size(X, 2)
-    data = Flux.Data.DataLoader(X, Y, batchsize = batch, shuffle = true) |> device
+    data = Flux.Data.DataLoader((X, Y), batchsize = batch, shuffle = true) |> device
 
     ann = device(ann)
     ps = params(ann)

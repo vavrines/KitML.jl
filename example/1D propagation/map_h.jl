@@ -1,19 +1,6 @@
-using Flux, KitBase, KitBase.FastGaussQuadrature, ProgressMeter, Plots, LinearAlgebra, Optim
+using Flux, DiffEqFlux, DiffEqFlux.GalacticOptim, Plots, LinearAlgebra, Optim
+using KitBase, KitBase.FastGaussQuadrature, KitBase.ProgressMeter
 import KitML
-
-cd(@__DIR__)
-include("../math.jl")
-
-function ComputeSphericalBasisAnalytical(quadpts::AbstractVector{<:AbstractFloat})
-    # Hardcoded solution for L = 1, spatialDim = 3
-    monomialBasis = zeros(2,length(quadpts))
-    for idx_quad in 0:(size(quadpts)[1]-1)
-        monomialBasis[1,idx_quad+1]  = 1
-        monomialBasis[2,idx_quad+1]  = quadpts[idx_quad+1,1] # x
-    end
-
-    return monomialBasis
-end
 
 function flux_wall!(
     ff::T1,
@@ -31,13 +18,6 @@ function flux_wall!(
     @. ff = u * fWall * dt
 
     return nothing
-end
-
-maxwell_boltzmann(x) = x * log(x) - x
-
-function kinetic_entropy(α, m, weights)
-    B = KitBase.maxwell_boltzmann_dual_prime.(α' * m)[:]
-    return sum(maxwell_boltzmann.(B) .* weights)
 end
 
 begin
@@ -65,7 +45,7 @@ begin
     # moments
     L = 1
     ne = 2
-    m = ComputeSphericalBasisAnalytical(points)
+    m = eval_sphermonomial(points, L)
 
     # time
     cfl = 0.5
@@ -86,14 +66,15 @@ begin
     phiT = zeros(Float32, nx, ne)
     phi_old = zeros(Float32, ne, nx)
     phi_temp = deepcopy(phi_old)
-
+    
+    opt = optimize_closure(zeros(Float32, 2), m, weights, phi[:, 1], KitBase.maxwell_boltzmann_dual)
+    
     global X = zeros(Float32, ne, 1)
-    #global Y = zeros(Float32, 1, 1) # h
-    global Y = zeros(Float32, ne, 1) # α
-    res = KitBase.optimize_closure(zeros(Float32, 2), m, weights, phi[:, 1], KitBase.maxwell_boltzmann_dual)
     X[:, 1] .= phi[:, 1]
-    #Y[1, 1] = kinetic_entropy(res.minimizer, m, weights)
-    Y[:, 1] = res.minimizer
+    global Y = zeros(Float32, 1, 1) # h
+    Y[1, 1] = kinetic_entropy(opt.minimizer, m, weights)
+    #global Y = zeros(Float32, ne, 1) # α
+    #Y[:, 1] = opt.minimizer
 end
 
 begin
@@ -114,9 +95,9 @@ for iter = 1:nt
 
     # mathematical optimizer
     @inbounds for i = 1:nx
-        _res = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
-        α[:, i] .= _res.minimizer
-        phi[:, i] .= KitBase.realizable_reconstruct(_res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+        opt = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
+        α[:, i] .= opt.minimizer
+        phi[:, i] .= KitBase.realizable_reconstruct(opt.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
     
         #X = hcat(X, phi[:, i])
         #Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
@@ -161,25 +142,42 @@ end
 
 for i = 1:nx
     X = hcat(X, phi[:, i])
-    #Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
-    Y = hcat(Y, α[:, i])
+    Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
+    #Y = hcat(Y, α[:, i])
 end
 
 X_old = deepcopy(X)
 Y_old = deepcopy(Y)
 
-fnn = FastChain(FastDense(2, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 2))
-res = KitML.sci_train(fnn, (X, Y); maxiters = 200)
-res = KitML.sci_train(fnn, (X, Y), res.minimizer, LBFGS(); maxiters=10000)
-
+fnn = FastChain(FastDense(2, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 1))
+res = KitML.sci_train(fnn, (X, Y); maxiters = 2000)
+res = KitML.sci_train(fnn, (X, Y), res.u, LBFGS(); maxiters=1000)
+#=
+p = initial_params(fnn)
+function loss(p)
+    #norm(KitML.neural_closure(fnn, p, X) .- Y, 2)
+    l = 0.0
+    for i in axes(X, 2)
+        l += sum(fnn(X[:, i], p) .- Y[1, i])
+    end
+    return l /= size(X, 2)
+end
+cb = function (p, l)
+    println("loss: $(loss(p))")
+    return false
+end
+res = KitML.sci_train(loss, p, ADAM(); maxiters=200, cb=cb)
+res = KitML.sci_train(loss, res.u, LBFGS(); maxiters=400, cb=cb)
+res = KitML.sci_train(loss, res.u, ADAM(); maxiters=4000, cb=cb)
+=#
 #cd(@__DIR__)
 #tmodel = KitML.load_model("best_model.h5"; mode = :tf)
 #tmodel.fit(permutedims(X), permutedims(Y), epochs=10)
 #tmodel.predict(permutedims(phi[:, 1]))
 #KitML.neural_closure(tmodel, permutedims(phi[:, 1]))
 
-#X = deepcopy(X_old)
-#Y = deepcopy(Y_old)
+X = deepcopy(X_old)
+Y = deepcopy(Y_old)
 begin
     # initial condition
     f0 = 0.0001 * ones(nu)
@@ -198,24 +196,28 @@ anim = @animate for iter = 1:nt
     phi_old .= phi
 
     # regularization
-    #α .= KitML.neural_closure(nn, res.minimizer, phi_old)
-    α .= fnn(phi_old, res.minimizer)
+    #α .= KitML.neural_closure(fnn, res.u, phi_old)
+    for i = 1:nx
+        α[:, i] .= KitML.neural_closure(fnn, res.u, phi_old[:, i])
+    end
+
+    #α .= fnn(phi_old, res.u)
     @inbounds Threads.@threads for i = 1:nx
         phi_temp[:, i] .= KitBase.realizable_reconstruct(α[:, i], m, weights, KitBase.maxwell_boltzmann_dual_prime)
     end
 
     counter = 0
     @inbounds for i = 1:nx
-        if norm(phi_temp[:, i] .- phi_old[:, i], 1) / phi_old[1, i] > 2e-3
+        if norm(phi_temp[:, i] .- phi_old[:, i], 1) / phi_old[1, i] > 1e-2#2e-3
             counter +=1
 
-            _res = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
-            α[:, i] .= _res.minimizer
-            phi[:, i] .= KitBase.realizable_reconstruct(_res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+            opt = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
+            α[:, i] .= opt.minimizer
+            phi[:, i] .= KitBase.realizable_reconstruct(opt.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
 
             X = hcat(X, phi[:, i])
-            #Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
-            Y = hcat(Y, α[:, i])
+            Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
+            #Y = hcat(Y, α[:, i])
         else
             phi[:, i] .= phi_temp[:, i]
         end
@@ -255,14 +257,17 @@ anim = @animate for iter = 1:nt
 
     global t += dt
 
-    if iter%19 == 0
-        res = KitML.sci_train(fnn, (X, Y), res.minimizer, LBFGS(); maxiters=500)
-        
-        #=X = zeros(Float32, 1, ne)
-        Y = zeros(Float32, 1, 1)
-        res = KitBase.optimize_closure(α[:, nx], m, weights, phi[:, nx], KitBase.maxwell_boltzmann_dual)
-        X[1, :] .= phi[:, nx]
-        Y[1, 1] = kinetic_entropy(α[:, nx], m, weights)=#
+    if iter%9 == 0
+        #res = KitML.sci_train(fnn, (X, Y), res.u, ADAM(); maxiters=200)
+        res = KitML.sci_train(fnn, (X, Y), res.u, LBFGS(); maxiters=400)
+        #=
+        X = zeros(Float32, ne, 1)
+        #Y = zeros(Float32, 1, 1)
+        Y = zeros(Float32, ne, 1)
+        opt = KitBase.optimize_closure(α[:, nx], m, weights, phi[:, nx], KitBase.maxwell_boltzmann_dual)
+        X[:, 1] .= phi[:, nx]
+        #Y[1, 1] = kinetic_entropy(α[:, nx], m, weights)
+        Y[:, 1] = opt.minimizer=#
     end
 
     plot(ps.x[1:nx], phi[1, :])
@@ -272,15 +277,12 @@ gif(anim, "unified_1d.gif")
 #gif(anim, "neural_1d.gif")
 plot(ps.x[1:nx], phi[1, :])
 
-using BenchmarkTools, Optim
+#=using BenchmarkTools
 
-@btime KitML.neural_closure(tmodel, phiT[:, :])
+#@btime KitML.neural_closure(tmodel, phiT[:, :])
+@btime fnn(phi, res.u)
+
 @btime for i = 1:nx
-    #res = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
-
-    loss(_α) = sum(maxwell_boltzmann_dual.(_α' * m)[:] .* weights) - dot(_α, phi[:, i])
-    res = Optim.optimize(loss, α[:, i], Optim.Newton())
+    KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
 end
-
-plot(Y)
-
+=#
