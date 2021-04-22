@@ -16,7 +16,7 @@ OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 [compat]
 CSV = "0.8"
 Conda = "^1"
-DataFrames = "0.22"
+DataFrames = "0.22, 1.0"
 DiffEqFlux = "^1"
 Flux = "0.12"
 KitBase = "0.4"
