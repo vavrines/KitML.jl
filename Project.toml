@@ -1,7 +1,7 @@
 name = "KitML"
 uuid = "b2531deb-9288-45c6-8f4a-0220551da45d"
 authors = ["Tianbai Xiao <tianbaixiao@gmail.com>"]
-version = "0.3.1"
+version = "0.3.2"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -16,10 +16,10 @@ OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 [compat]
 CSV = "0.8"
 Conda = "^1"
-DataFrames = "0.22"
+DataFrames = "0.22, 1.0"
 DiffEqFlux = "^1"
 Flux = "0.12"
-KitBase = "0.4"
+KitBase = "0.5"
 Optim = "^1"
 OrdinaryDiffEq = "^5"
 julia = "^1"
