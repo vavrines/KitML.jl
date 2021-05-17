@@ -22,17 +22,17 @@ end
 
 Load the trained machine learning model
 """
-function load_model(file::T) where {T<:AbstractString}
+function load_model(file::T; kwargs...) where {T<:AbstractString}
     if file[end-3:end] == "jld2"
-        load_model(file; mode = :jld)
+        nn = load_model(file, :jld)
     else
-        load_model(file; mode = :tf)
+        nn = load_model(file, :tf)
     end
 
     return nn
 end
 
-function load_model(file::T; mode) where {T<:AbstractString}
+function load_model(file::T, mode) where {T<:AbstractString}
     if mode == :jld
         @load file nn
     elseif mode == :tf
