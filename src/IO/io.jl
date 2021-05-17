@@ -32,7 +32,7 @@ function load_model(file::T) where {T<:AbstractString}
     return nn
 end
 
-function load_model(file::T; mode = :jld) where {T<:AbstractString}
+function load_model(file::T; mode) where {T<:AbstractString}
     if mode == :jld
         @load file nn
     elseif mode == :tf
