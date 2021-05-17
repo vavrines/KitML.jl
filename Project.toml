@@ -1,7 +1,7 @@
 name = "KitML"
 uuid = "b2531deb-9288-45c6-8f4a-0220551da45d"
 authors = ["Tianbai Xiao <tianbaixiao@gmail.com>"]
-version = "0.3.2"
+version = "0.3.3"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
