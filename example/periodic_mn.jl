@@ -17,10 +17,7 @@ begin
     m = KitBase.eval_spherharmonic(points, L)
 
     res = KitBase.optimize_closure(α, m, weights, u0, KitBase.maxwell_boltzmann_dual)
-    u = KitBase.realizable_reconstruct(
-        res.minimizer,
-        m,
-        weights,
+    u = KitBase.realizable_reconstruct( res.minimizer, m, weights,
         KitBase.maxwell_boltzmann_dual_prime,
     )
 end

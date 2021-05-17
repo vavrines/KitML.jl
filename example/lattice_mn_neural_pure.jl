@@ -1,6 +1,6 @@
 using LinearAlgebra, Plots, JLD2
 using Flux, Flux.Zygote, Optim, DiffEqFlux
-using KitBase, ProgressMeter
+using KitBase
 import KitML
 include("math.jl")
 
@@ -24,7 +24,7 @@ begin
 
     # time
     tEnd = 5.0
-    cfl = 0.7
+    cfl = 0.8
     dt = cfl / 2 * (dx * dy) / (dx + dy)
 
     # quadrature

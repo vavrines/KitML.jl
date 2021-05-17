@@ -87,6 +87,33 @@ function ComputeSphericalBasisAnalytical(quadpts::Matrix{Float64})
     return monomialBasis
 end
 
+function ComputeSphericalBasisAnalytical2D(quadpts::Matrix{Float64})
+    # Hardcoded solution for L = 1, spatialDim = 3
+    
+    monomialBasis = zeros(3,size(quadpts,1))
+    for idx_quad in 1:(size(quadpts)[1])
+        monomialBasis[1,idx_quad]  = 1
+        monomialBasis[2,idx_quad]  = quadpts[idx_quad,1] # x
+        monomialBasis[3,idx_quad]  = quadpts[idx_quad,2] # y
+    #    monomialBasis[4,idx_quad]  = quadpts[idx_quad,1] # x 
+    #    monomialBasis[5,idx_quad]  = quadpts[idx_quad,3] * quadpts[idx_quad,3] # z*z
+    #    monomialBasis[6,idx_quad]  = quadpts[idx_quad,2] * quadpts[idx_quad,3] # y*z
+    #    monomialBasis[7,idx_quad]  = quadpts[idx_quad,2] * quadpts[idx_quad,2] # y*y 
+    #    monomialBasis[8,idx_quad]  = quadpts[idx_quad,1] * quadpts[idx_quad,3] # x*z 
+    #    monomialBasis[9,idx_quad]  = quadpts[idx_quad,1] * quadpts[idx_quad,2] # x*y 
+    #    monomialBasis[10,idx_quad] = quadpts[idx_quad,1] * quadpts[idx_quad,1] # x*x
+    end
+
+    #monomialBasis = zeros(3,size(quadpts,1))
+    #for idx_quad in 1:(size(quadpts)[1])
+    #    monomialBasis[1,idx_quad]  = 1
+    #    monomialBasis[2,idx_quad]  = quadpts[idx_quad,1] # z
+    #    monomialBasis[3,idx_quad]  = quadpts[idx_quad,1] * quadpts[idx_quad,1] # z*z
+    #end
+
+    return monomialBasis
+end
+
 function Power(  basis,  exponent ) 
     if exponent == 0 
         return 1.0
