@@ -13,10 +13,7 @@ using KitBase.Reexport
 @reexport using Solaris
 using Solaris.DiffEqFlux
 
-#include("IO/io.jl")
 include("Equation/equation.jl")
-#include("Layer/layer.jl")
-#include("Train/train.jl")
 include("Closure/closure.jl")
 include("Solver/solver.jl")
 
