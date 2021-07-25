@@ -53,5 +53,5 @@ function create_neural_closure(
     acfun = relu,
     mode = :icnn,
 ) where {T<:Integer}
-    return ICNNChain(Din, Dout, ones(Int, Nhid) * Dhid, acfun)
+    return ICNN(Din, Dout, ones(Int, Nhid) * Dhid, acfun)
 end

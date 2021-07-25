@@ -9,18 +9,11 @@ module KitML
 using KitBase
 using KitBase.JLD2
 using KitBase.PyCall
-using Flux
-using Flux.Zygote
-using DiffEqFlux
-using DiffEqFlux.GalacticOptim
-using OrdinaryDiffEq
-using CSV
-using DataFrames
+using KitBase.Reexport
+@reexport using Solaris
+using Solaris.DiffEqFlux
 
-include("IO/io.jl")
 include("Equation/equation.jl")
-include("Layer/layer.jl")
-include("Train/train.jl")
 include("Closure/closure.jl")
 include("Solver/solver.jl")
 

@@ -1,8 +1,10 @@
-using Test, Flux, DiffEqFlux
-import KitML
+using Test, KitML
+using Solaris
+using Solaris.Flux, Solaris.DiffEqFlux
+
+const SR = Solaris
 
 include("test_io.jl")
-include("test_layer.jl")
 include("test_train.jl")
 include("test_equation.jl")
 include("test_solver.jl")
