@@ -1,14 +1,14 @@
 name = "KitML"
 uuid = "b2531deb-9288-45c6-8f4a-0220551da45d"
 authors = ["Tianbai Xiao <tianbaixiao@gmail.com>"]
-version = "0.4.0"
+version = "0.4.1"
 
 [deps]
 KitBase = "86eed249-3a28-466f-8d3a-596821e1af9a"
 Solaris = "c31bc6c7-79d6-424e-a85f-5b42ee086500"
 
 [compat]
-KitBase = "0.6"
+KitBase = "0.7"
 Solaris = "0.2"
 julia = "^1"
 
