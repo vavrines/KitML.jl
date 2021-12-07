@@ -1,3 +1,5 @@
+using KitML.KitBase
+
 #--- 1D ---#
 begin
     set = Setup(space = "1d1f1v")
@@ -35,8 +37,8 @@ begin
         cfl = 0.5,
         maxTime = 15.0, # time
     )
-    ps = CSpace2D(1.0, 6.0, 60, 0.0, π, 50, 1, 1)
-    vs = VSpace2D(-10.0, 10.0, 48, -10.0, 10.0, 48)
+    ps = CSpace2D(1.0, 6.0, 10, 0.0, π, 10, 1, 1)
+    vs = VSpace2D(-10.0, 10.0, 24, -10.0, 10.0, 24)
     gas = Gas(Kn = 1e-2, Ma = 5.0, K = 1.0)
     
     prim0 = [1.0, 0.0, 0.0, 1.0]

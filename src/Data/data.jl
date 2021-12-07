@@ -5,13 +5,25 @@
 export regime_data
 
 """
-    regime_data(w, sw, f, u, K, Kn, μ = ref_vhs_vis(Kn, 1.0, 0.5), ω = 0.81)
-    regime_data(w, swx, swy, f, u, v, K, Kn, μ = ref_vhs_vis(Kn, 1.0, 0.5), ω = 0.81)
-    regime_data(ks, w, swx, swy, f)
-
 Generate dataset for fluid regime classification
 """
-function regime_data(w, sw, f, u, K, Kn, μ = ref_vhs_vis(Kn, 1.0, 0.5), ω = 0.81)
+function regime_data(args...)
+    if length(args[1]) == 3
+        regime_data_1d(args...)
+    elseif length(args[1]) == 4
+        regime_data_2d(args...)
+    end
+end
+
+function regime_data(ks::SolverSet, args...)
+    if length(args[1]) == 3
+        regime_data_1d(ks, args...)
+    elseif length(args[1]) == 4
+        regime_data_2d(ks, args...)
+    end
+end
+
+function regime_data_1d(w, sw, f, u, K::Real, Kn::Real, μ = ref_vhs_vis(Kn, 1.0, 0.5), ω = 0.81)
     γ = heat_capacity_ratio(K, 2)
     prim = conserve_prim(w, γ)
 
@@ -28,7 +40,9 @@ function regime_data(w, sw, f, u, K, Kn, μ = ref_vhs_vis(Kn, 1.0, 0.5), ω = 0.
     return x, y
 end
 
-function regime_data(w, swx, swy, f, u, v, K, Kn, μ = ref_vhs_vis(Kn, 1.0, 0.5), ω = 0.81)
+regime_data_1d(ks::SolverSet, w, sw, f) = regime_data(w, sw, f, ks.vs.u, ks.gas.K, ks.gas.Kn)
+
+function regime_data_2d(w, swx, swy, f, u, v, K::Real, Kn::Real, μ = ref_vhs_vis(Kn, 1.0, 0.5), ω = 0.81)
     γ = heat_capacity_ratio(K, 2)
     prim = conserve_prim(w, γ)
     
@@ -48,6 +62,4 @@ function regime_data(w, swx, swy, f, u, v, K, Kn, μ = ref_vhs_vis(Kn, 1.0, 0.5)
     return x, y
 end
 
-regime_data(ks, w, sw, f) = regime_data(w, sw, f, u, ks.gas.K, ks.gas.Kn)
-
-regime_data(ks::SolverSet, w, swx, swy, f) = regime_data(w, swx, swy, f, ks.vs.u, ks.vs.v, ks.gas.K, ks.gas.Kn)
+regime_data_2d(ks::SolverSet, w, swx, swy, f) = regime_data(w, swx, swy, f, ks.vs.u, ks.vs.v, ks.gas.K, ks.gas.Kn)

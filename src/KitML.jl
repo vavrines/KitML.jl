@@ -6,6 +6,7 @@ Copyright (c) 2021 Tianbai Xiao & Steffen Schotthöfer <tianbaixiao@gmail.com>
 
 module KitML
 
+using LinearAlgebra
 using KitBase
 using KitBase.JLD2
 using KitBase.PyCall
