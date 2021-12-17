@@ -6,7 +6,6 @@ const SR = Solaris
 cd(@__DIR__)
 
 include("test_data.jl")
-include("test_io.jl")
 include("test_train.jl")
 include("test_equation.jl")
 include("test_solver.jl")
