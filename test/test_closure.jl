@@ -10,5 +10,5 @@ p = initial_params(fnn)
 KitML.neural_closure(fnn, p, randn(Float32, 4))
 
 cd(@__DIR__)
-model = KitML.load_model("tfmodel.h5"; mode = :tf)
-KitML.neural_closure(model, randn(Float32, 1, 4))
+#model = KitML.load_model("tfmodel.h5"; mode = :tf)
+#KitML.neural_closure(model, randn(Float32, 1, 4))
