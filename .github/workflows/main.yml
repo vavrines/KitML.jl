@@ -34,6 +34,7 @@ jobs:
     steps:
       - run: |
           pip install meshio --user
+          pip3 install tensorflow --user
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
