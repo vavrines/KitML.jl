@@ -33,8 +33,7 @@ jobs:
           - x64
     steps:
       - run: |
-          pip install meshio --user
-          pip3 install tensorflow --user
+          pip3 install meshio tensorflow --user
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
