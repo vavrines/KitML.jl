@@ -1,3 +1,5 @@
+@info "testing equations"
+
 begin
     u = collect(-5:0.5:5)
     ω = ones(21) ./ 21

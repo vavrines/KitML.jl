@@ -1,3 +1,5 @@
+@info "testing closures"
+
 KitML.create_neural_closure(10, 5)
 
 nn = Chain(Dense(4, 4, tanh), Dense(4, 1))

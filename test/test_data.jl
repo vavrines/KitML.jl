@@ -1,3 +1,5 @@
+@info "testing data handlers"
+
 using KitML.KitBase
 
 #--- 1D ---#

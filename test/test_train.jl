@@ -1,3 +1,5 @@
+@info "testing trainers"
+
 nn = Chain(Dense(21, 21, tanh), Dense(21, 21))
 nn1 = FastChain(FastDense(21, 21, tanh), FastDense(21, 21))
 
