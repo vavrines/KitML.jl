@@ -28,7 +28,7 @@ function regime_data(ks::SolverSet, args...)
 end
 
 function regime_data_1d(w, sw, f, u, K::Real, Kn::Real, μ = ref_vhs_vis(Kn, 1.0, 0.5), ω = 0.81)
-    γ = heat_capacity_ratio(K, 2)
+    γ = heat_capacity_ratio(K, 1)
     prim = conserve_prim(w, γ)
 
     Mu, Mxi, _, _1 = gauss_moments(prim, K)
