@@ -9,7 +9,7 @@
 
 This lightweight module provides neural differential equations for Kinetic.jl ecosystem.
 The finite volume method (FVM) is employed to perform 1-3 dimensional numerical simulations on CPUs and GPUs.
-Machine learning methods are seamlessly integrated to build data-drivenclosure models and accelerate the calculation of nonlinear terms.
+Machine learning methods are seamlessly integrated to build data-drivenclosure models and accelerate the computation of nonlinear terms.
 A partial list of current supported models and equations include:
 - Boltzmann equation
 - radiative transfer equation
