@@ -8,10 +8,7 @@ begin
     ps = PSpace1D(0.0, 1.0, 10)
     vs = VSpace1D(-5.0, 5.0, 16)
     gas = Gas(K = 0.0)
-    
-    prim0 = [1.0, 0.0, 1.0]
-    fw = (args...) -> prim_conserve(prim0, gas.γ)
-    ib = IB1F(fw, vs, gas)
+    ib = nothing
 
     ks = SolverSet(set, ps, vs, gas, ib)
 end
@@ -28,10 +25,7 @@ begin
     ps = PSpace1D(0.0, 1.0, 10)
     vs = VSpace2D(-10.0, 10.0, 24, -10.0, 10.0, 24)
     gas = Gas(K = 1.0)
-    
-    prim0 = [1.0, 0.0, 0.0, 1.0]
-    fw = (args...) -> prim_conserve(prim0, gas.γ)
-    ib = IB2F(fw, vs, gas)
+    ib = nothing
 
     ks = SolverSet(set, ps, vs, gas, ib)
 end
@@ -47,10 +41,7 @@ begin
     ps = PSpace1D(0.0, 1.0, 10)
     vs = VSpace3D(-10, 10, 16, -10, 10, 16, -10, 10, 16)
     gas = Gas(K = 0.0)
-    
-    prim0 = [1.0, 0.0, 0.0, 1.0]
-    fw = (args...) -> prim_conserve(prim0, gas.γ)
-    ib = IB1F(fw, vs, gas)
+    ib = nothing
 
     ks = SolverSet(set, ps, vs, gas, ib)
 end
