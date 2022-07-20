@@ -3,12 +3,11 @@
 # ============================================================
 
 """
-    step_ube!(fwL, fhL, fbL, w, prim, h, b, fwR, fhR, fbR, u, weights, p; mode=:nn)
+$(SIGNATURES)
 
 Update solver of universal Boltzmann equation
 
-@args: u & weights kept for multiple dispatch
-
+`u` & `weights` kept in arguments for multiple dispatch
 """
 function step_ube!(fwL, fhL, fbL, w, prim, h, b, fwR, fhR, fbR, u, weights, p; mode = :nn)
 

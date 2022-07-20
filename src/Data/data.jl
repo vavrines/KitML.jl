@@ -5,6 +5,8 @@
 export regime_data
 
 """
+$(SIGNATURES)
+
 Generate dataset for fluid regime classification
 """
 function regime_data(args...)
@@ -17,6 +19,9 @@ function regime_data(args...)
     end
 end
 
+"""
+$(SIGNATURES)
+"""
 function regime_data(ks::SolverSet, args...)
     if length(args[1]) == 3
         regime_data_1d(ks, args...)

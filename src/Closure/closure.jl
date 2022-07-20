@@ -5,21 +5,28 @@
 export neural_closure, create_neural_closure
 
 """
-    neural_closure(X, model)
+$(SIGNATURES)
 
 Neural closure model computation
 
-@args X: model input
-@args model: neural network model
+# Arguments
+* ``model``: neural network model
+* ``X``: model input
 """
 function neural_closure(model, X::T) where {T<:AbstractArray}
     return Zygote.gradient(x -> first(model(x)), X)[1]
 end
 
+"""
+$(SIGNATURES)
+"""
 function neural_closure(model::T, p, X::T1) where {T<:DiffEqFlux.FastLayer,T1<:AbstractArray}
     return Zygote.gradient(x -> first(model(x, p)), X)[1]
 end
 
+"""
+$(SIGNATURES)
+"""
 function neural_closure(model::PyObject, X::T) where {T<:AbstractArray}
     py"""
     import tensorflow as tf
@@ -41,7 +48,7 @@ end
 
 
 """
-    create_neural_closure(imputDim, outputDim; acfun = relu)
+$(SIGNATURES)
 
 Create neural closure model
 """

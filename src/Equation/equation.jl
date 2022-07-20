@@ -5,14 +5,14 @@
 export ube_dfdt, ube_dfdt!
 
 """
-    ube_dfdt(f, p, t)
+$(SIGNATURES)
 
 Right-hand side of universal Boltzmann equation
 
-* @args f: particle distribution function in 1D formulation
-* @args p: M, τ, ann (network & parameters)
-* @args t: tspan
-
+# Arguments
+* ``f``: particle distribution function in 1D formulation
+* ``p``: M, τ, ann (network & parameters)
+* ``t``: time span
 """
 function ube_dfdt(f, p, t)
     M, τ, ann = p
@@ -28,15 +28,15 @@ end
 
 
 """
-    ube_dfdt!(df, f, p, t)
+$(SIGNATURES)
 
 Right-hand side of universal Boltzmann equation
 
-* @args df: derivatives of particle distribution function
-* @args f: particle distribution function in 1D formulation
-* @args p: M, τ, ann (network & parameters)
-* @args t: tspan
-    
+# Arguments
+* ``df``: derivatives of particle distribution function
+* ``f``: particle distribution function in 1D formulation
+* ``p``: M, τ, ann (network & parameters)
+* ``t``: time span
 """
 function ube_dfdt!(df, f, p, t)
     M, τ, ann = p

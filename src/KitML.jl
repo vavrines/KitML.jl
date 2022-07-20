@@ -8,6 +8,7 @@ module KitML
 
 using LinearAlgebra
 using KitBase
+using KitBase.FiniteMesh.DocStringExtensions
 using KitBase.JLD2
 using KitBase.PyCall
 using KitBase.Reexport
