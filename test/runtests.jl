@@ -1,6 +1,6 @@
 using Test, KitML
 using Solaris
-using Solaris.Flux, Solaris.DiffEqFlux
+using Solaris.Flux
 
 cd(@__DIR__)
 

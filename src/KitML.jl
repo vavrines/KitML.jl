@@ -12,8 +12,10 @@ using KitBase.FiniteMesh.DocStringExtensions
 using KitBase.JLD2
 using KitBase.PyCall
 using KitBase.Reexport
+using KitBase: AV, AM, AVOM
 @reexport using Solaris
-using Solaris.DiffEqFlux
+using Solaris.Flux
+using Solaris.Zygote
 
 include("Data/data.jl")
 include("Equation/equation.jl")

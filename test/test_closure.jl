@@ -5,8 +5,8 @@ KitML.create_neural_closure(10, 5)
 nn = Chain(Dense(4, 4, tanh), Dense(4, 1))
 KitML.neural_closure(nn, randn(Float32, 4))
 
-fnn = FastChain(FastDense(4, 4, tanh), FastDense(4, 1))
-p = initial_params(fnn)
+fnn = FnChain(FnDense(4, 4, tanh), FnDense(4, 1))
+p = init_params(fnn)
 KitML.neural_closure(fnn, p, randn(Float32, 4))
 
 cd(@__DIR__)

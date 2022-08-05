@@ -13,21 +13,21 @@ Neural closure model computation
 * ``model``: neural network model
 * ``X``: model input
 """
-function neural_closure(model, X::T) where {T<:AbstractArray}
+function neural_closure(model, X)
     return Zygote.gradient(x -> first(model(x)), X)[1]
 end
 
 """
 $(SIGNATURES)
 """
-function neural_closure(model::T, p, X::T1) where {T<:DiffEqFlux.FastLayer,T1<:AbstractArray}
+function neural_closure(model, p, X)
     return Zygote.gradient(x -> first(model(x, p)), X)[1]
 end
 
 """
 $(SIGNATURES)
 """
-function neural_closure(model::PyObject, X::T) where {T<:AbstractArray}
+function neural_closure(model::PyObject, X)
     py"""
     import tensorflow as tf
 
