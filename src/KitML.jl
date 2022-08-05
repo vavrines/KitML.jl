@@ -20,6 +20,7 @@ using Solaris.Zygote
 include("Data/data.jl")
 include("Equation/equation.jl")
 include("Closure/closure.jl")
+include("Layer/layer.jl")
 include("Solver/solver.jl")
 
 end
