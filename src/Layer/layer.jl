@@ -24,15 +24,17 @@ BGKNet(m, ν) = BGKNet(m, ν, -)
 """
 $(SIGNATURES)
 
-Forward pass of BGK relaxation network
+Forward pass of BGK network
 
-Last row of x is set as reference viscosity
+Last row of x is set as mean relaxation time
 """
 (nn::BGKNet)(x, p, vs = VSpace1D(-6, 6, size(x)[1] - 1; precision = Float32), γ = 3) = begin
     nm = param_length(nn.Mnet)
-    f = @view x[begin:end-1, :] # μ = @view x[end, :]
+    f = @view x[begin:end-1, :]
+    τ = @view x[end:end, :]
     M = f_maxwellian(f, vs, γ)
-    nn.νnet(x, p[nm+1:end]) .* (nn.fn(M .+ nn.Mnet(f, p[1:nm]), f))
+    
+    relu(τ .+ nn.νnet(x, p[nm+1:end])) .* (nn.fn(relu(M .+ nn.Mnet(f, p[1:nm])), f))
 end
 
 Solaris.init_params(nn::BGKNet) = vcat(init_params(nn.Mnet), init_params(nn.νnet))

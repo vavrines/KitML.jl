@@ -3,7 +3,7 @@ vs = KitML.KitBase.VSpace1D(-5, 5, 16; precision = Float32)
 mn = FnChain(FnDense(vs.nu, vs.nu, tanh; bias = false), FnDense(vs.nu, vs.nu; bias = false))
 νn = FnChain(
     FnDense(vs.nu + 1, vs.nu, tanh; bias = false),
-    FnDense(vs.nu, vs.nu, sigmoid; bias = false),
+    FnDense(vs.nu, vs.nu, relu; bias = false),
 )
 nn = BGKNet(mn, νn)
 p = init_params(nn)
