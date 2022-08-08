@@ -22,7 +22,19 @@ end
 
 begin
     # setup
-    set = Setup("radiation", "linesource", "1d1f1v", "kfvs", "bgk", 1, 2, "vanleer", "extra", 0.3, 0.8)
+    set = Setup(
+        "radiation",
+        "linesource",
+        "1d1f1v",
+        "kfvs",
+        "bgk",
+        1,
+        2,
+        "vanleer",
+        "extra",
+        0.3,
+        0.8,
+    )
 
     # physical space
     x0 = 0
@@ -34,7 +46,14 @@ begin
     # velocity space
     nu = 28
     points, weights = gausslegendre(nu)
-    vs = VSpace1D(points[1], points[end], nu, points, ones(nu) .* (points[end] - points[1]) / (nu - 1), weights)
+    vs = VSpace1D(
+        points[1],
+        points[end],
+        nu,
+        points,
+        ones(nu) .* (points[end] - points[1]) / (nu - 1),
+        weights,
+    )
 
     # material
     σs = ones(Float32, nx)
@@ -66,9 +85,15 @@ begin
     phiT = zeros(Float32, nx, ne)
     phi_old = zeros(Float32, ne, nx)
     phi_temp = deepcopy(phi_old)
-    
-    opt = optimize_closure(zeros(Float32, 2), m, weights, phi[:, 1], KitBase.maxwell_boltzmann_dual)
-    
+
+    opt = optimize_closure(
+        zeros(Float32, 2),
+        m,
+        weights,
+        phi[:, 1],
+        KitBase.maxwell_boltzmann_dual,
+    )
+
     global X = zeros(Float32, ne, 1)
     X[:, 1] .= phi[:, 1]
     global Y = zeros(Float32, 1, 1) # h
@@ -95,10 +120,21 @@ for iter = 1:nt
 
     # mathematical optimizer
     @inbounds for i = 1:nx
-        opt = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
+        opt = KitBase.optimize_closure(
+            α[:, i],
+            m,
+            weights,
+            phi[:, i],
+            KitBase.maxwell_boltzmann_dual,
+        )
         α[:, i] .= opt.minimizer
-        phi[:, i] .= KitBase.realizable_reconstruct(opt.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
-    
+        phi[:, i] .= KitBase.realizable_reconstruct(
+            opt.minimizer,
+            m,
+            weights,
+            KitBase.maxwell_boltzmann_dual_prime,
+        )
+
         #X = hcat(X, phi[:, i])
         #Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
     end
@@ -109,8 +145,14 @@ for iter = 1:nt
     end
 
     @inbounds for i = 2:nx
-        KitBase.flux_kfvs!(fη, KitBase.maxwell_boltzmann_dual.(α[:, i-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i]' * m)[:], points, dt)
-        
+        KitBase.flux_kfvs!(
+            fη,
+            KitBase.maxwell_boltzmann_dual.(α[:, i-1]' * m)[:],
+            KitBase.maxwell_boltzmann_dual.(α[:, i]' * m)[:],
+            points,
+            dt,
+        )
+
         for k in axes(flux, 1)
             flux[k, i] = sum(m[k, :] .* weights .* fη)
         end
@@ -132,7 +174,7 @@ for iter = 1:nt
                 (-σt[i] * phi[q, i]) * dt
         end
     end
-    phi[:, nx] .=  phi[:, nx-1]
+    phi[:, nx] .= phi[:, nx-1]
 
     global t += dt
 
@@ -149,9 +191,15 @@ end
 X_old = deepcopy(X)
 Y_old = deepcopy(Y)
 
-fnn = FastChain(FastDense(2, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 10, tanh), FastDense(10, 1))
+fnn = FastChain(
+    FastDense(2, 10, tanh),
+    FastDense(10, 10, tanh),
+    FastDense(10, 10, tanh),
+    FastDense(10, 10, tanh),
+    FastDense(10, 1),
+)
 res = KitML.sci_train(fnn, (X, Y); maxiters = 2000)
-res = KitML.sci_train(fnn, (X, Y), res.u, LBFGS(); maxiters=1000)
+res = KitML.sci_train(fnn, (X, Y), res.u, LBFGS(); maxiters = 1000)
 #=
 p = initial_params(fnn)
 function loss(p)
@@ -191,7 +239,7 @@ begin
 end
 
 anim = @animate for iter = 1:nt
-#for iter = 1:1#nt
+    #for iter = 1:1#nt
     println("iteration $iter of $nt")
     phi_old .= phi
 
@@ -203,17 +251,33 @@ anim = @animate for iter = 1:nt
 
     #α .= fnn(phi_old, res.u)
     @inbounds Threads.@threads for i = 1:nx
-        phi_temp[:, i] .= KitBase.realizable_reconstruct(α[:, i], m, weights, KitBase.maxwell_boltzmann_dual_prime)
+        phi_temp[:, i] .= KitBase.realizable_reconstruct(
+            α[:, i],
+            m,
+            weights,
+            KitBase.maxwell_boltzmann_dual_prime,
+        )
     end
 
     counter = 0
     @inbounds for i = 1:nx
         if norm(phi_temp[:, i] .- phi_old[:, i], 1) / phi_old[1, i] > 1e-2#2e-3
-            counter +=1
+            counter += 1
 
-            opt = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
+            opt = KitBase.optimize_closure(
+                α[:, i],
+                m,
+                weights,
+                phi[:, i],
+                KitBase.maxwell_boltzmann_dual,
+            )
             α[:, i] .= opt.minimizer
-            phi[:, i] .= KitBase.realizable_reconstruct(opt.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+            phi[:, i] .= KitBase.realizable_reconstruct(
+                opt.minimizer,
+                m,
+                weights,
+                KitBase.maxwell_boltzmann_dual_prime,
+            )
 
             X = hcat(X, phi[:, i])
             Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
@@ -230,8 +294,14 @@ anim = @animate for iter = 1:nt
     end
 
     @inbounds for i = 2:nx
-        KitBase.flux_kfvs!(fη, KitBase.maxwell_boltzmann_dual.(α[:, i-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i]' * m)[:], points, dt)
-        
+        KitBase.flux_kfvs!(
+            fη,
+            KitBase.maxwell_boltzmann_dual.(α[:, i-1]' * m)[:],
+            KitBase.maxwell_boltzmann_dual.(α[:, i]' * m)[:],
+            points,
+            dt,
+        )
+
         for k in axes(flux, 1)
             flux[k, i] = sum(m[k, :] .* weights .* fη)
         end
@@ -253,13 +323,13 @@ anim = @animate for iter = 1:nt
                 (-σt[i] * phi[q, i]) * dt
         end
     end
-    phi[:, nx] .=  phi[:, nx-1]
+    phi[:, nx] .= phi[:, nx-1]
 
     global t += dt
 
-    if iter%9 == 0
+    if iter % 9 == 0
         #res = KitML.sci_train(fnn, (X, Y), res.u, ADAM(); maxiters=200)
-        res = KitML.sci_train(fnn, (X, Y), res.u, LBFGS(); maxiters=400)
+        res = KitML.sci_train(fnn, (X, Y), res.u, LBFGS(); maxiters = 400)
         #=
         X = zeros(Float32, ne, 1)
         #Y = zeros(Float32, 1, 1)

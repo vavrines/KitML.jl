@@ -85,57 +85,81 @@ end
 
 @showprogress for iter = 1:20#20
     #phi_old .= phi
-#=
-    # regularization
-    @inbounds for i = 1:ne
-        phiT[:, i] .= phi[i, :, :][:]
-    end
-    αT .= KitML.neural_closure(model, phiT)
-    @inbounds for i = 1:ne
-        α[i, :, :] .= reshape(αT[:, i], nx, ny)
-    end
-    @inbounds Threads.@threads for j = 1:ny
-        for i = 1:nx
-            phi_temp[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
+    #=
+        # regularization
+        @inbounds for i = 1:ne
+            phiT[:, i] .= phi[i, :, :][:]
         end
-    end
-
-    @inbounds for j = 1:ny
-        for i = 1:nx
-            #@show norm(phi_temp[:, i, j] - phi_old[:, i, j], 2)
-
-            if norm(phi_temp[:, i, j] - phi_old[:, i, j], 2) > 1e-1
-                res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
-                α[:, i, j] .= res.minimizer
-                phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
-
-                if phi[1, i, j] > 0.01
-                    X = vcat(X, permutedims(α[:, i, j]))
-                    Y = vcat(Y, kinetic_entropy(α[:, i, j], m, weights))
-                end
-            else
-                phi[:, i, j] .= phi_temp[:, i, j]
+        αT .= KitML.neural_closure(model, phiT)
+        @inbounds for i = 1:ne
+            α[i, :, :] .= reshape(αT[:, i], nx, ny)
+        end
+        @inbounds Threads.@threads for j = 1:ny
+            for i = 1:nx
+                phi_temp[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
             end
         end
-    end
-=#
-    
-    res = KitBase.optimize_closure(α[:, 1], m, weights, phi[:, 1], KitBase.maxwell_boltzmann_dual)
+
+        @inbounds for j = 1:ny
+            for i = 1:nx
+                #@show norm(phi_temp[:, i, j] - phi_old[:, i, j], 2)
+
+                if norm(phi_temp[:, i, j] - phi_old[:, i, j], 2) > 1e-1
+                    res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
+                    α[:, i, j] .= res.minimizer
+                    phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+
+                    if phi[1, i, j] > 0.01
+                        X = vcat(X, permutedims(α[:, i, j]))
+                        Y = vcat(Y, kinetic_entropy(α[:, i, j], m, weights))
+                    end
+                else
+                    phi[:, i, j] .= phi_temp[:, i, j]
+                end
+            end
+        end
+    =#
+
+    res = KitBase.optimize_closure(
+        α[:, 1],
+        m,
+        weights,
+        phi[:, 1],
+        KitBase.maxwell_boltzmann_dual,
+    )
     α[:, 1] .= res.minimizer
     #res = KitBase.optimize_closure(α[:, nx], m, weights, phi[:, nx], KitBase.maxwell_boltzmann_dual)
     #α[:, nx] .= res.minimizer
-    
+
     @inbounds for i = 2:nx
-        res = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual; optimizer=Newton())
+        res = KitBase.optimize_closure(
+            α[:, i],
+            m,
+            weights,
+            phi[:, i],
+            KitBase.maxwell_boltzmann_dual;
+            optimizer = Newton(),
+        )
         α[:, i] .= res.minimizer
-        phi[:, i] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+        phi[:, i] .= KitBase.realizable_reconstruct(
+            res.minimizer,
+            m,
+            weights,
+            KitBase.maxwell_boltzmann_dual_prime,
+        )
     end
 
     # flux
     fη = zeros(nq)
     @inbounds for i = 2:nx
-        KitBase.flux_kfvs!(fη, KitBase.maxwell_boltzmann_dual.(α[:, i-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i]' * m)[:], points[:, 1], dt)
-        
+        KitBase.flux_kfvs!(
+            fη,
+            KitBase.maxwell_boltzmann_dual.(α[:, i-1]' * m)[:],
+            KitBase.maxwell_boltzmann_dual.(α[:, i]' * m)[:],
+            points[:, 1],
+            dt,
+        )
+
         for k in axes(flux, 1)
             flux[k, i] = sum(m[k, :] .* weights .* fη)
         end
@@ -161,20 +185,18 @@ end
 
         for q = 2:ne
             phi[q, i] =
-                phi[q, i] +
-                (flux[q, i] - flux[q, i+1]) / dx +
-                (-σt[i] * phi[q, i]) * dt
+                phi[q, i] + (flux[q, i] - flux[q, i+1]) / dx + (-σt[i] * phi[q, i]) * dt
         end
     end
-    
-    phi[:, nx] .=  phi[:, nx-1]
+
+    phi[:, nx] .= phi[:, nx-1]
 
     global t += dt
 
     #=
     if iter%9 == 0
         model.fit(X, Y, epochs=2)
-        
+
         X = zeros(Float32, 1, ne)
         Y = zeros(Float32, 1, 1)
         res = KitBase.optimize_closure(X[1, :], m, weights, phi[:, nx÷2, ny÷2], KitBase.maxwell_boltzmann_dual)

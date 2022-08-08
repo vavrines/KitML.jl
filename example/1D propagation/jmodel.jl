@@ -6,10 +6,10 @@ include("../math.jl")
 
 function ComputeSphericalBasisAnalytical(quadpts::AbstractVector{<:AbstractFloat})
     # Hardcoded solution for L = 1, spatialDim = 3
-    monomialBasis = zeros(2,length(quadpts))
-    for idx_quad in 0:(size(quadpts)[1]-1)
-        monomialBasis[1,idx_quad+1]  = 1
-        monomialBasis[2,idx_quad+1]  = quadpts[idx_quad+1,1] # x
+    monomialBasis = zeros(2, length(quadpts))
+    for idx_quad = 0:(size(quadpts)[1]-1)
+        monomialBasis[1, idx_quad+1] = 1
+        monomialBasis[2, idx_quad+1] = quadpts[idx_quad+1, 1] # x
     end
 
     return monomialBasis
@@ -42,7 +42,19 @@ end
 
 begin
     # setup
-    set = Setup("radiation", "linesource", "1d1f1v", "kfvs", "bgk", 1, 2, "vanleer", "extra", 0.3, 0.8)
+    set = Setup(
+        "radiation",
+        "linesource",
+        "1d1f1v",
+        "kfvs",
+        "bgk",
+        1,
+        2,
+        "vanleer",
+        "extra",
+        0.3,
+        0.8,
+    )
 
     # physical space
     x0 = 0
@@ -54,7 +66,14 @@ begin
     # velocity space
     nu = 28
     points, weights = gausslegendre(nu)
-    vs = VSpace1D(points[1], points[end], nu, points, ones(nu) .* (points[end] - points[1]) / (nu - 1), weights)
+    vs = VSpace1D(
+        points[1],
+        points[end],
+        nu,
+        points,
+        ones(nu) .* (points[end] - points[1]) / (nu - 1),
+        weights,
+    )
 
     # material
     σs = ones(Float32, nx)
@@ -81,7 +100,13 @@ begin
 
     global X = zeros(Float32, ne, 1)
     global Y = zeros(Float32, 1, 1)
-    res = KitBase.optimize_closure(α[:, 1], m, weights, phi[:, 1], KitBase.maxwell_boltzmann_dual)
+    res = KitBase.optimize_closure(
+        α[:, 1],
+        m,
+        weights,
+        phi[:, 1],
+        KitBase.maxwell_boltzmann_dual,
+    )
     X[:, 1] .= phi[:, 1]
     Y[1, 1] = kinetic_entropy(α[:, 1], m, weights)
 end
@@ -103,10 +128,21 @@ anim = @animate for iter = 1:nt
 
     # mathematical optimizer
     @inbounds for i = 1:nx
-        res = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
+        res = KitBase.optimize_closure(
+            α[:, i],
+            m,
+            weights,
+            phi[:, i],
+            KitBase.maxwell_boltzmann_dual,
+        )
         α[:, i] .= res.minimizer
-        phi[:, i] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
-    
+        phi[:, i] .= KitBase.realizable_reconstruct(
+            res.minimizer,
+            m,
+            weights,
+            KitBase.maxwell_boltzmann_dual_prime,
+        )
+
         X = hcat(X, phi[:, i])
         Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
     end
@@ -117,8 +153,14 @@ anim = @animate for iter = 1:nt
     end
 
     @inbounds for i = 2:nx
-        KitBase.flux_kfvs!(fη, KitBase.maxwell_boltzmann_dual.(α[:, i-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i]' * m)[:], points, dt)
-        
+        KitBase.flux_kfvs!(
+            fη,
+            KitBase.maxwell_boltzmann_dual.(α[:, i-1]' * m)[:],
+            KitBase.maxwell_boltzmann_dual.(α[:, i]' * m)[:],
+            points,
+            dt,
+        )
+
         for k in axes(flux, 1)
             flux[k, i] = sum(m[k, :] .* weights .* fη)
         end
@@ -140,7 +182,7 @@ anim = @animate for iter = 1:nt
                 (-σt[i] * phi[q, i]) * dt
         end
     end
-    phi[:, nx] .=  phi[:, nx-1]
+    phi[:, nx] .= phi[:, nx-1]
 
     global t += dt
 
@@ -179,7 +221,7 @@ end
 
 anim = @animate for iter = 1:nt
     println("iteration $iter of $nt")
-#for iter = 1:1#nt
+    #for iter = 1:1#nt
     # mathematical optimizer
     #=@inbounds for i = 1:nx
         res = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
@@ -198,17 +240,33 @@ anim = @animate for iter = 1:nt
         α[i, :] .= αT[:, i]
     end
     @inbounds Threads.@threads for i = 1:nx
-        phi_temp[:, i] .= KitBase.realizable_reconstruct(α[:, i], m, weights, KitBase.maxwell_boltzmann_dual_prime)
+        phi_temp[:, i] .= KitBase.realizable_reconstruct(
+            α[:, i],
+            m,
+            weights,
+            KitBase.maxwell_boltzmann_dual_prime,
+        )
     end
 
     counter = 0
     @inbounds for i = 1:nx
         if false#norm(phi_temp[:, i] .- phi_old[:, i], 1) / phi_old[1, i] > 2e-3
-            counter +=1
+            counter += 1
 
-            res = KitBase.optimize_closure(α[:, i], m, weights, phi[:, i], KitBase.maxwell_boltzmann_dual)
+            res = KitBase.optimize_closure(
+                α[:, i],
+                m,
+                weights,
+                phi[:, i],
+                KitBase.maxwell_boltzmann_dual,
+            )
             α[:, i] .= res.minimizer
-            phi[:, i] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+            phi[:, i] .= KitBase.realizable_reconstruct(
+                res.minimizer,
+                m,
+                weights,
+                KitBase.maxwell_boltzmann_dual_prime,
+            )
 
             X = hcat(X, phi[:, i])
             Y = hcat(Y, kinetic_entropy(α[:, i], m, weights))
@@ -225,8 +283,14 @@ anim = @animate for iter = 1:nt
     end
 
     @inbounds for i = 2:nx
-        KitBase.flux_kfvs!(fη, KitBase.maxwell_boltzmann_dual.(α[:, i-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i]' * m)[:], points, dt)
-        
+        KitBase.flux_kfvs!(
+            fη,
+            KitBase.maxwell_boltzmann_dual.(α[:, i-1]' * m)[:],
+            KitBase.maxwell_boltzmann_dual.(α[:, i]' * m)[:],
+            points,
+            dt,
+        )
+
         for k in axes(flux, 1)
             flux[k, i] = sum(m[k, :] .* weights .* fη)
         end
@@ -248,13 +312,13 @@ anim = @animate for iter = 1:nt
                 (-σt[i] * phi[q, i]) * dt
         end
     end
-    phi[:, nx] .=  phi[:, nx-1]
+    phi[:, nx] .= phi[:, nx-1]
 
     global t += dt
 
-    if iter%19 == 0
-        tmodel.fit(permutedims(X), permutedims(Y), epochs=1)
-        
+    if iter % 19 == 0
+        tmodel.fit(permutedims(X), permutedims(Y), epochs = 1)
+
         #=X = zeros(Float32, 1, ne)
         Y = zeros(Float32, 1, 1)
         res = KitBase.optimize_closure(α[:, nx], m, weights, phi[:, nx], KitBase.maxwell_boltzmann_dual)

@@ -56,7 +56,14 @@ set = Setup(
 pSpace = PSpace1D(x0, x1, nx, nxg)
 
 points, weights = gausslegendre(nu)
-vSpace = VSpace1D(points[1], points[end], nu, points, ones(nu).*(points[end]-points[1])/(nu-1), weights)
+vSpace = VSpace1D(
+    points[1],
+    points[end],
+    nu,
+    points,
+    ones(nu) .* (points[end] - points[1]) / (nu - 1),
+    weights,
+)
 
 μᵣ = ref_vhs_vis(knudsen, alphaRef, omegaRef)
 gas = Gas(knudsen, mach, prandtl, inK, 3.0, omega, alphaRef, omegaRef, μᵣ)
@@ -74,13 +81,8 @@ ks = SolverSet(set, pSpace, vSpace, gas, ib, @__DIR__)
 ctr = Array{ControlVolume1D1F}(undef, ks.pSpace.nx)
 face = Array{Interface1D1F}(undef, ks.pSpace.nx + 1)
 for i in eachindex(ctr)
-    ctr[i] = ControlVolume1D1F(
-        ks.pSpace.x[i],
-        ks.pSpace.dx[i],
-        ks.ib.wR,
-        ks.ib.primR,
-        ks.ib.fR,
-    )
+    ctr[i] =
+        ControlVolume1D1F(ks.pSpace.x[i], ks.pSpace.dx[i], ks.ib.wR, ks.ib.primR, ks.ib.fR)
 end
 
 for i = 1:ks.pSpace.nx+1
@@ -132,28 +134,15 @@ function step(
     w[1] = sum(weights .* f)
 end
 
-dt = cfl * pSpace.dx[1] 
+dt = cfl * pSpace.dx[1]
 nt = maxTime / dt |> floor |> Int
 
 anim = @animate for iter = 1:150#nt
     #reconstruct!(ks, ctr)
 
-    fboundary(
-        face[1].ff,
-        ctr[1].f,
-        vSpace.u,
-        dt,
-    )
+    fboundary(face[1].ff, ctr[1].f, vSpace.u, dt)
     @inbounds for i = 2:nx
-        flux_kfvs!(
-            face[i].ff,
-            ctr[i-1].f,
-            ctr[i].f,
-            vSpace.u,
-            dt,
-            ctr[i-1].sf,
-            ctr[i].sf,
-        )
+        flux_kfvs!(face[i].ff, ctr[i-1].f, ctr[i].f, vSpace.u, dt, ctr[i-1].sf, ctr[i].sf)
     end
 
     @inbounds for i = 1:nx-1

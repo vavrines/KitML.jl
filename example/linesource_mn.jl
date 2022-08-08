@@ -89,19 +89,36 @@ anim = @animate for iter = 1:140
     # regularization
     @inbounds Threads.@threads for j = 1:ny
         for i = 1:nx
-            res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
+            res = KitBase.optimize_closure(
+                α[:, i, j],
+                m,
+                weights,
+                phi[:, i, j],
+                KitBase.maxwell_boltzmann_dual,
+            )
             α[:, i, j] .= res.minimizer
-            
-            phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+
+            phi[:, i, j] .= KitBase.realizable_reconstruct(
+                res.minimizer,
+                m,
+                weights,
+                KitBase.maxwell_boltzmann_dual_prime,
+            )
         end
     end
-    
+
     # flux
     fη1 = zeros(nq)
     @inbounds for j = 1:ny
         for i = 2:nx
-            KitBase.flux_kfvs!(fη1, KitBase.maxwell_boltzmann_dual.(α[:, i-1, j]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 1], dt)
-            
+            KitBase.flux_kfvs!(
+                fη1,
+                KitBase.maxwell_boltzmann_dual.(α[:, i-1, j]' * m)[:],
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:],
+                points[:, 1],
+                dt,
+            )
+
             for k in axes(flux1, 1)
                 flux1[k, i, j] = sum(m[k, :] .* weights .* fη1)
             end
@@ -111,14 +128,20 @@ anim = @animate for iter = 1:140
     fη2 = zeros(nq)
     @inbounds for i = 1:nx
         for j = 2:ny
-            KitBase.flux_kfvs!(fη2, KitBase.maxwell_boltzmann_dual.(α[:, i, j-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 2], dt)
-            
+            KitBase.flux_kfvs!(
+                fη2,
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j-1]' * m)[:],
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:],
+                points[:, 2],
+                dt,
+            )
+
             for k in axes(flux2, 1)
                 flux2[k, i, j] = sum(m[k, :] .* (weights .* fη2))
             end
         end
     end
-    
+
     # update
     @inbounds for j = 2:ny-1
         for i = 2:nx-1
@@ -135,7 +158,7 @@ anim = @animate for iter = 1:140
                     phi[q, i, j] +
                     (flux1[q, i, j] - flux1[q, i+1, j]) / dx +
                     (flux2[q, i, j] - flux2[q, i, j+1]) / dy +
-                    (- SigmaT[i, j] * phi[q, i, j]) * dt
+                    (-SigmaT[i, j] * phi[q, i, j]) * dt
             end
         end
     end
@@ -161,14 +184,15 @@ end
 X = zeros(4, 1)
 Y = zeros(1, 1)
 X[:, 1] .= phi[:, 1, 1]
-Y[1, 1] = sum(weights .* 
-maxwell_boltzmann_dual.(maxwell_boltzmann_dual_prime.(m' * α[:, 1, 1])))
+Y[1, 1] =
+    sum(weights .* maxwell_boltzmann_dual.(maxwell_boltzmann_dual_prime.(m' * α[:, 1, 1])))
 
 for i = 1:nx, j = 1:ny
     X = hcat(X, phi[:, i, j])
-    
-    η = sum(weights .* 
-    maxwell_boltzmann_dual.(maxwell_boltzmann_dual_prime.(m' * α[:, i, j])))
+
+    η = sum(
+        weights .* maxwell_boltzmann_dual.(maxwell_boltzmann_dual_prime.(m' * α[:, i, j])),
+    )
     Y = hcat(Y, η)
 end
 
@@ -307,7 +331,13 @@ contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
 @save "model.jld2" nn
 @info "model saved"
 
-res = KitBase.optimize_closure(α[:, 25, 25], m, weights, phi[:, 25, 25], KitBase.maxwell_boltzmann_dual)
+res = KitBase.optimize_closure(
+    α[:, 25, 25],
+    m,
+    weights,
+    phi[:, 25, 25],
+    KitBase.maxwell_boltzmann_dual,
+)
 res.minimizer
 
 savefig("test.png")

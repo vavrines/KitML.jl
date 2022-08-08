@@ -35,26 +35,26 @@ begin
 
     # moments
     L = 1
-    ne = GetBasisSize(L,3)
+    ne = GetBasisSize(L, 3)
     phi = zeros(Float32, ne, nx, ny)
     α = zeros(Float32, ne, nx, ny)
-    m = ComputeSphericalBasisKarth(points,1,3)
+    m = ComputeSphericalBasisKarth(points, 1, 3)
 end
 
 function is_absorb(x::T, y::T) where {T<:Real}
     cds = Array{Bool}(undef, 11) # conditions
 
-    cds[1] = -2.5<x<-1.5 && 1.5<y<2.5
-    cds[2] = -2.5<x<-1.5 && -0.5<y<0.5
-    cds[3] = -2.5<x<-1.5 && -2.5<y<-1.5
-    cds[4] = -1.5<x<-0.5 && 0.5<y<1.5
-    cds[5] = -1.5<x<-0.5 && -1.5<y<-0.5
-    cds[6] = -0.5<x<0.5 && -2.5<y<-1.5
-    cds[7] = 0.5<x<1.5 && 0.5<y<1.5
-    cds[8] = 0.5<x<1.5 && -1.5<y<-0.5
-    cds[9] = 1.5<x<2.5 && 1.5<y<2.5
-    cds[10] = 1.5<x<2.5 && -0.5<y<0.5
-    cds[11] = 1.5<x<2.5 && -2.5<y<-1.5
+    cds[1] = -2.5 < x < -1.5 && 1.5 < y < 2.5
+    cds[2] = -2.5 < x < -1.5 && -0.5 < y < 0.5
+    cds[3] = -2.5 < x < -1.5 && -2.5 < y < -1.5
+    cds[4] = -1.5 < x < -0.5 && 0.5 < y < 1.5
+    cds[5] = -1.5 < x < -0.5 && -1.5 < y < -0.5
+    cds[6] = -0.5 < x < 0.5 && -2.5 < y < -1.5
+    cds[7] = 0.5 < x < 1.5 && 0.5 < y < 1.5
+    cds[8] = 0.5 < x < 1.5 && -1.5 < y < -0.5
+    cds[9] = 1.5 < x < 2.5 && 1.5 < y < 2.5
+    cds[10] = 1.5 < x < 2.5 && -0.5 < y < 0.5
+    cds[11] = 1.5 < x < 2.5 && -2.5 < y < -1.5
 
     if any(cds) == true
         return true
@@ -79,7 +79,7 @@ begin
     σt = σs + σa
     σq = zeros(Float64, nx, ny)
     for i = 1:nx, j = 1:ny
-        if -0.5<pspace.x[i, j]<0.5 && -0.5<pspace.y[i, j]<0.5
+        if -0.5 < pspace.x[i, j] < 0.5 && -0.5 < pspace.y[i, j] < 0.5
             σq[i, j] = 1.0 / (4.0 * π)
         else
             σq[i, j] = 0.0
@@ -99,8 +99,8 @@ end
 global t = 0.0
 flux1 = zeros(ne, nx + 1, ny)
 flux2 = zeros(ne, nx, ny + 1)
-αT = zeros(Float32, nx*ny, ne)
-phiT = zeros(Float32, nx*ny, ne)
+αT = zeros(Float32, nx * ny, ne)
+phiT = zeros(Float32, nx * ny, ne)
 
 anim = @animate for iter = 1:100
     println("Iteration $(iter)")
@@ -115,16 +115,27 @@ anim = @animate for iter = 1:100
     end
     @inbounds Threads.@threads for j = 1:ny
         for i = 1:nx
-            phi[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
+            phi[:, i, j] .= KitBase.realizable_reconstruct(
+                α[:, i, j],
+                m,
+                weights,
+                KitBase.maxwell_boltzmann_dual_prime,
+            )
         end
     end
- 
+
     # flux
     fη1 = zeros(nq)
     @inbounds for j = 1:ny
         for i = 2:nx
-            KitBase.flux_kfvs!(fη1, KitBase.maxwell_boltzmann_dual.(α[:, i-1, j]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 1], dt)
-            
+            KitBase.flux_kfvs!(
+                fη1,
+                KitBase.maxwell_boltzmann_dual.(α[:, i-1, j]' * m)[:],
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:],
+                points[:, 1],
+                dt,
+            )
+
             for k in axes(flux1, 1)
                 flux1[k, i, j] = sum(m[k, :] .* weights .* fη1)
             end
@@ -134,14 +145,20 @@ anim = @animate for iter = 1:100
     fη2 = zeros(nq)
     @inbounds for i = 1:nx
         for j = 2:ny
-            KitBase.flux_kfvs!(fη2, KitBase.maxwell_boltzmann_dual.(α[:, i, j-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 2], dt)
-            
+            KitBase.flux_kfvs!(
+                fη2,
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j-1]' * m)[:],
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:],
+                points[:, 2],
+                dt,
+            )
+
             for k in axes(flux2, 1)
                 flux2[k, i, j] = sum(m[k, :] .* (weights .* fη2))
             end
         end
     end
-    
+
     # update
     @inbounds for j = 2:ny-1
         for i = 2:nx-1

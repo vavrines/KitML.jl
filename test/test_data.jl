@@ -31,7 +31,7 @@ begin
 end
 
 w = [1.0, 0.0, 0.0, 1.0]
-prim = conserve_prim(w, 5/3)
+prim = conserve_prim(w, 5 / 3)
 f = maxwellian(ks.vs.u, ks.vs.v, prim)
 regime_data(ks, w, zeros(4), zeros(4), f)
 
@@ -47,6 +47,6 @@ begin
 end
 
 w = [1.0, 0.0, 0.0, 0.0, 1.0]
-prim = conserve_prim(w, 5/3)
+prim = conserve_prim(w, 5 / 3)
 f = maxwellian(ks.vs.u, ks.vs.v, ks.vs.w, prim)
 regime_data(ks, w, zeros(5), zeros(5), zeros(5), f)

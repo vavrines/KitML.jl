@@ -15,17 +15,17 @@ end
 function is_absorb(x::T, y::T) where {T<:Real}
     cds = Array{Bool}(undef, 11) # conditions
 
-    cds[1] = -2.5<x<-1.5 && 1.5<y<2.5
-    cds[2] = -2.5<x<-1.5 && -0.5<y<0.5
-    cds[3] = -2.5<x<-1.5 && -2.5<y<-1.5
-    cds[4] = -1.5<x<-0.5 && 0.5<y<1.5
-    cds[5] = -1.5<x<-0.5 && -1.5<y<-0.5
-    cds[6] = -0.5<x<0.5 && -2.5<y<-1.5
-    cds[7] = 0.5<x<1.5 && 0.5<y<1.5
-    cds[8] = 0.5<x<1.5 && -1.5<y<-0.5
-    cds[9] = 1.5<x<2.5 && 1.5<y<2.5
-    cds[10] = 1.5<x<2.5 && -0.5<y<0.5
-    cds[11] = 1.5<x<2.5 && -2.5<y<-1.5
+    cds[1] = -2.5 < x < -1.5 && 1.5 < y < 2.5
+    cds[2] = -2.5 < x < -1.5 && -0.5 < y < 0.5
+    cds[3] = -2.5 < x < -1.5 && -2.5 < y < -1.5
+    cds[4] = -1.5 < x < -0.5 && 0.5 < y < 1.5
+    cds[5] = -1.5 < x < -0.5 && -1.5 < y < -0.5
+    cds[6] = -0.5 < x < 0.5 && -2.5 < y < -1.5
+    cds[7] = 0.5 < x < 1.5 && 0.5 < y < 1.5
+    cds[8] = 0.5 < x < 1.5 && -1.5 < y < -0.5
+    cds[9] = 1.5 < x < 2.5 && 1.5 < y < 2.5
+    cds[10] = 1.5 < x < 2.5 && -0.5 < y < 0.5
+    cds[11] = 1.5 < x < 2.5 && -2.5 < y < -1.5
 
     if any(cds) == true
         return true
@@ -65,12 +65,12 @@ begin
     # moments
     L = 1
     #ne = (L + 1)^2
-    ne = GetBasisSize(L,3)
+    ne = GetBasisSize(L, 3)
     phi = zeros(Float32, ne, nx, ny)
     phi[1, :, :] .= 1e-6
     α = zeros(Float32, ne, nx, ny)
     #m = KitBase.eval_spherharmonic(points, L)
-    m = ComputeSphericalBasisAnalytical( points)
+    m = ComputeSphericalBasisAnalytical(points)
 end
 
 begin
@@ -88,7 +88,7 @@ begin
     σt = σs + σa
     σq = zeros(Float64, nx, ny)
     for i = 1:nx, j = 1:ny
-        if -0.5<pspace.x[i, j]<0.5 && -0.5<pspace.y[i, j]<0.5
+        if -0.5 < pspace.x[i, j] < 0.5 && -0.5 < pspace.y[i, j] < 0.5
             σq[i, j] = 1.0 / (4.0 * π)
         else
             σq[i, j] = 0.0
@@ -102,14 +102,20 @@ global t = 0.0
 flux1 = zeros(Float32, ne, nx + 1, ny)
 flux2 = zeros(Float32, ne, nx, ny + 1)
 
-αT = zeros(Float32, nx*ny, ne)
-phiT = zeros(Float32, nx*ny, ne)
+αT = zeros(Float32, nx * ny, ne)
+phiT = zeros(Float32, nx * ny, ne)
 
 global X = zeros(Float32, 1, ne)
 global Y = zeros(Float32, 1, 1)
 
-res = KitBase.optimize_closure(X[1, :], m, weights, phi[:, nx÷2, ny÷2], KitBase.maxwell_boltzmann_dual)
-X[1, :] .= res.minimizer       
+res = KitBase.optimize_closure(
+    X[1, :],
+    m,
+    weights,
+    phi[:, nx÷2, ny÷2],
+    KitBase.maxwell_boltzmann_dual,
+)
+X[1, :] .= res.minimizer
 Y[1, 1] = kinetic_entropy(X[1, :], m, weights)
 
 #=
@@ -152,7 +158,12 @@ anim = @animate for iter = 1:1000#20
     end
     @inbounds Threads.@threads for j = 1:ny
         for i = 1:nx
-            phi_temp[:, i, j] .= KitBase.realizable_reconstruct(α[:, i, j], m, weights, KitBase.maxwell_boltzmann_dual_prime)
+            phi_temp[:, i, j] .= KitBase.realizable_reconstruct(
+                α[:, i, j],
+                m,
+                weights,
+                KitBase.maxwell_boltzmann_dual_prime,
+            )
         end
     end
 
@@ -161,9 +172,20 @@ anim = @animate for iter = 1:1000#20
             @show norm(phi_temp[:, i, j] - phi_old[:, i, j], 2)
 
             if norm(phi_temp[:, i, j] - phi_old[:, i, j], 2) > 1e-1
-                res = KitBase.optimize_closure(α[:, i, j], m, weights, phi[:, i, j], KitBase.maxwell_boltzmann_dual)
+                res = KitBase.optimize_closure(
+                    α[:, i, j],
+                    m,
+                    weights,
+                    phi[:, i, j],
+                    KitBase.maxwell_boltzmann_dual,
+                )
                 α[:, i, j] .= res.minimizer
-                phi[:, i, j] .= KitBase.realizable_reconstruct(res.minimizer, m, weights, KitBase.maxwell_boltzmann_dual_prime)
+                phi[:, i, j] .= KitBase.realizable_reconstruct(
+                    res.minimizer,
+                    m,
+                    weights,
+                    KitBase.maxwell_boltzmann_dual_prime,
+                )
 
                 if phi[1, i, j] > 0.01
                     X = vcat(X, permutedims(phi[:, i, j]))
@@ -179,8 +201,14 @@ anim = @animate for iter = 1:1000#20
     fη1 = zeros(nq)
     @inbounds for j = 1:ny
         for i = 2:nx
-            KitBase.flux_kfvs!(fη1, KitBase.maxwell_boltzmann_dual.(α[:, i-1, j]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 1], dt)
-            
+            KitBase.flux_kfvs!(
+                fη1,
+                KitBase.maxwell_boltzmann_dual.(α[:, i-1, j]' * m)[:],
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:],
+                points[:, 1],
+                dt,
+            )
+
             for k in axes(flux1, 1)
                 flux1[k, i, j] = sum(m[k, :] .* weights .* fη1)
             end
@@ -190,14 +218,20 @@ anim = @animate for iter = 1:1000#20
     fη2 = zeros(nq)
     @inbounds for i = 1:nx
         for j = 2:ny
-            KitBase.flux_kfvs!(fη2, KitBase.maxwell_boltzmann_dual.(α[:, i, j-1]' * m)[:], KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:], points[:, 2], dt)
-            
+            KitBase.flux_kfvs!(
+                fη2,
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j-1]' * m)[:],
+                KitBase.maxwell_boltzmann_dual.(α[:, i, j]' * m)[:],
+                points[:, 2],
+                dt,
+            )
+
             for k in axes(flux2, 1)
                 flux2[k, i, j] = sum(m[k, :] .* (weights .* fη2))
             end
         end
     end
-    
+
     # update
     @inbounds for j = 2:ny-1
         for i = 2:nx-1
@@ -223,13 +257,19 @@ anim = @animate for iter = 1:1000#20
     global t += dt
     contourf(pspace.x[1:nx, 1], pspace.y[1, 1:ny], phi[1, :, :])
 
-    if iter%9 == 0
-        model.fit(X, Y, epochs=2)
-        
+    if iter % 9 == 0
+        model.fit(X, Y, epochs = 2)
+
         X = zeros(Float32, 1, ne)
         Y = zeros(Float32, 1, 1)
-        res = KitBase.optimize_closure(X[1, :], m, weights, phi[:, nx÷2, ny÷2], KitBase.maxwell_boltzmann_dual)
-        X[1, :] .= res.minimizer       
+        res = KitBase.optimize_closure(
+            X[1, :],
+            m,
+            weights,
+            phi[:, nx÷2, ny÷2],
+            KitBase.maxwell_boltzmann_dual,
+        )
+        X[1, :] .= res.minimizer
         Y[1, 1] = kinetic_entropy(X[1, :], m, weights)
     end
 end

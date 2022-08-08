@@ -2,7 +2,7 @@ using DiffEqFlux, Flux
 import KitML
 
 X = rand(4, 10)
-Y = X.^2
+Y = X .^ 2
 
 # dense layers
 nn = FastChain(FastDense(4, 4, tanh), FastDense(4, 4))

@@ -13,7 +13,7 @@ Y = randn(Float32, 10, 1)
 # reinforcement training
 KitML.sci_train!(model, (X, Y); epoch = 2)
 # it's equivalent as
-model.fit(X, Y, epochs=2)
+model.fit(X, Y, epochs = 2)
 
 model.predict(X)
 
