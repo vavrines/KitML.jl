@@ -34,7 +34,7 @@ Last row of x is set as mean relaxation time
     τ = @view x[end:end, :]
     M = f_maxwellian(f, vs, γ)
     
-    relu(τ .+ nn.νnet(x, p[nm+1:end])) .* (nn.fn(relu(M .+ nn.Mnet(f, p[1:nm])), f))
+    (nn.fn(relu(M .+ nn.Mnet(f, p[1:nm])), f)) ./ relu(τ .+ nn.νnet(x, p[nm+1:end]))
 end
 
 Solaris.init_params(nn::BGKNet) = vcat(init_params(nn.Mnet), init_params(nn.νnet))
