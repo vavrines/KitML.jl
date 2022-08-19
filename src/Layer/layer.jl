@@ -12,22 +12,18 @@ BGK relaxation network
 # Fields
 
 $(FIELDS)
-"""
-struct BGKNet{T1,T2,T3}
-    Mnet::T1
-    νnet::T2
-    fn::T3
-end
 
-BGKNet(m, ν) = BGKNet(m, ν, -)
+# Forward pass
 
-"""
-$(SIGNATURES)
-
-Forward pass of BGK network
+`(nn::BGKNet)(x, p, vs = VSpace1D(-6, 6, size(x)[1] - 1; precision = Float32), γ = 3) `
 
 Last row of x is set as mean relaxation time
 """
+struct BGKNet{T1,T2}
+    Mnet::T1
+    νnet::T2
+end
+
 (nn::BGKNet)(x, p, vs = VSpace1D(-6, 6, size(x)[1] - 1; precision = Float32), γ = 3) = begin
     nm = param_length(nn.Mnet)
     f = @view x[begin:end-1, :]
@@ -36,7 +32,7 @@ Last row of x is set as mean relaxation time
     y = f .- M
     z = vcat(y, τ)
     
-    (nn.fn(relu(M .+ nn.Mnet(y, p[1:nm])), f)) ./ (relu(τ .+ nn.νnet(z, p[nm+1:end])) .+ eps())
+    (relu(M .+ nn.Mnet(y, p[1:nm])) .- f) ./ (τ .* (1 .+ 0.2 .* tanh.(nn.νnet(z, p[nm+1:end]))))
 end
 
 Solaris.init_params(nn::BGKNet) = vcat(init_params(nn.Mnet), init_params(nn.νnet))
