@@ -12,7 +12,7 @@ using KitBase.FiniteMesh.DocStringExtensions
 using KitBase.JLD2
 using KitBase.PyCall
 using KitBase.Reexport
-using KitBase: AV, AM, AVOM
+using KitBase: AV, AM, AVOM, gauss_moments, pdf_slope, moments_conserve_slope
 @reexport using Solaris
 using Solaris.Flux
 using Solaris.Zygote
