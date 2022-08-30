@@ -24,7 +24,12 @@ struct BGKNet{T1,T2}
     νnet::T2
 end
 
-(nn::BGKNet)(x, p, vs = VSpace1D(-6, 6, size(x)[1] - 1), γ = 3) = begin
+(nn::BGKNet)(
+    x,
+    p,
+    vs = VSpace1D(-6, 6, size(x)[1] - 1),
+    γ = ifelse(size(x, 1) > vs.nu + 1, 5 / 3, 3),
+) = begin
     nm = param_length(nn.Mnet)
 
     if size(x, 1) > vs.nu + 1
