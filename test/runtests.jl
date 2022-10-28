@@ -1,5 +1,5 @@
 using Test, KitML
-using Solaris
+using KitBase, Solaris
 using Solaris.Flux
 
 cd(@__DIR__)
