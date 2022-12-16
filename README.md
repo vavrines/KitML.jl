@@ -1,7 +1,7 @@
 # KitML.jl
 
 [![version](https://juliahub.com/docs/KitML/version.svg)](https://juliahub.com/ui/Packages/KitML/akJVY)
-![CI](https://img.shields.io/github/workflow/status/vavrines/KitML.jl/CI)
+![CI](https://img.shields.io/github/actions/workflow/status/vavrines/KitML.jl/main.yml?branch=main)
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://xiaotianbai.com/Kinetic.jl/stable/)
 [![codecov](https://img.shields.io/codecov/c/github/vavrines/KitML.jl)](https://codecov.io/gh/vavrines/KitML.jl)
 [![deps](https://juliahub.com/docs/KitML/deps.svg)](https://juliahub.com/ui/Packages/KitML/akJVY?t=2)
