@@ -11,6 +11,7 @@ Solaris = "c31bc6c7-79d6-424e-a85f-5b42ee086500"
 
 [compat]
 KitBase = "0.7, 0.8, 0.9"
+LinearAlgebra = "<0.0.1, 1"
 PyCall = "^1"
 Solaris = "0.2"
 julia = "^1"
