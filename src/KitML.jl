@@ -11,7 +11,7 @@ using KitBase
 using KitBase.FiniteMesh.DocStringExtensions
 using KitBase.JLD2
 using KitBase.Reexport
-using KitBase: AV, AM, AVOM, VDF, gauss_moments, pdf_slope, moments_conserve_slope
+using KitBase: AV, AM, AVOM, VDF, Class, gauss_moments, pdf_slope, moments_conserve_slope
 @reexport using Solaris
 using Solaris.Flux
 using Solaris.Zygote
