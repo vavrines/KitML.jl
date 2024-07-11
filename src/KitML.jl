@@ -1,7 +1,7 @@
 """
 KitML.jl: The lightweight module of neural differential equations in Kinetic.jl
 
-Copyright (c) 2021-2023 Tianbai Xiao <tianbaixiao@gmail.com>
+Copyright (c) 2021-2024 Tianbai Xiao <tianbaixiao@gmail.com>
 """
 
 module KitML
@@ -11,7 +11,7 @@ using KitBase
 using KitBase.FiniteMesh.DocStringExtensions
 using KitBase.JLD2
 using KitBase.Reexport
-using KitBase: AV, AM, AVOM, gauss_moments, pdf_slope, moments_conserve_slope
+using KitBase: AV, AM, AVOM, VDF, gauss_moments, pdf_slope, moments_conserve_slope
 @reexport using Solaris
 using Solaris.Flux
 using Solaris.Zygote
