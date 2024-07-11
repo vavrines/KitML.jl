@@ -1,6 +1,7 @@
 using Test, KitML
 using KitBase, Solaris
 using Solaris.Flux
+using KitBase: Class
 
 cd(@__DIR__)
 
