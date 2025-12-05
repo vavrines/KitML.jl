@@ -13,6 +13,7 @@ using KitBase.JLD2
 using KitBase.Reexport
 using KitBase: AV, AM, AVOM, VDF, Class, gauss_moments, pdf_slope, moments_conserve_slope
 @reexport using Solaris
+using Solaris: param_length
 using Solaris.Flux
 using Solaris.Zygote
 using PyCall
