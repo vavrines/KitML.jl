@@ -1,7 +1,7 @@
 name = "KitML"
 uuid = "b2531deb-9288-45c6-8f4a-0220551da45d"
 authors = ["Tianbai Xiao <tianbaixiao@gmail.com>"]
-version = "0.4.10"
+version = "0.4.11"
 
 [deps]
 KitBase = "86eed249-3a28-466f-8d3a-596821e1af9a"
